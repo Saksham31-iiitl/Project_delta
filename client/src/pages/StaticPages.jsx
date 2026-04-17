@@ -75,7 +75,7 @@ export function AboutPage() {
         label="Our story"
         icon={Star}
         title="We exist for every occasion"
-        sub="NearbyStay was born from a simple frustration — finding a place to stay close to a wedding venue in India is surprisingly hard. We built the solution."
+        sub="HostTheGuest was born from a simple frustration — finding a place to stay close to a wedding venue in India is surprisingly hard. We built the solution."
       />
 
       {/* Story */}
@@ -92,7 +92,7 @@ export function AboutPage() {
             during a local event — but no easy way to rent it out to trusted guests.
           </p>
           <p>
-            NearbyStay connects both sides. We call it <span className="font-semibold text-brand-700">occasion-based stays</span> —
+            HostTheGuest connects both sides. We call it <span className="font-semibold text-brand-700">occasion-based stays</span> —
             accommodation that makes sense for the event you're attending, not just the city you're in.
           </p>
         </div>
@@ -147,7 +147,7 @@ export function BlogPage() {
   const coming = [
     { tag: "Hosting tips",    title: "How to make your spare room guest-ready in a weekend",   soon: true },
     { tag: "For guests",      title: "5 things to check before booking a stay near a wedding", soon: true },
-    { tag: "Platform news",   title: "NearbyStay's first 100 bookings — what we learned",     soon: true },
+    { tag: "Platform news",   title: "HostTheGuest's first 100 bookings — what we learned",     soon: true },
     { tag: "India & culture", title: "Why Indian weddings are the world's best hospitality opportunity", soon: true },
   ];
 
@@ -164,7 +164,7 @@ export function BlogPage() {
         <p className="text-2xl font-bold">We're writing ✍️</p>
         <p className="mt-2 text-brand-200">Our first posts are on their way. Subscribe to get them first.</p>
         <a
-          href="mailto:hostttheguest@gmail.com?subject=Subscribe to NearbyStay blog"
+          href="mailto:hostttheguest@gmail.com?subject=Subscribe to HostTheGuest blog"
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-500 px-5 py-2.5 text-sm font-semibold text-brand-900 transition-opacity hover:opacity-90"
         >
           <Mail className="h-4 w-4" /> Notify me when posts go live
@@ -203,7 +203,7 @@ export function CareersPage() {
   const perks = [
     "Work on a product used at real Indian weddings",
     "Small team, large ownership — your work ships fast",
-    "Remote-first with optional Jaipur office",
+    "Remote-first with optional Delhi NCR office",
     "Competitive salary + ESOPs for early hires",
     "Flexible hours around your best work time",
   ];
@@ -228,7 +228,7 @@ export function CareersPage() {
           but that changes. Drop us your resume and we'll reach out when something fits.
         </p>
         <a
-          href="mailto:hostttheguest@gmail.com?subject=Career enquiry — NearbyStay"
+          href="mailto:hostttheguest@gmail.com?subject=Career enquiry — HostTheGuest"
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
         >
           <Mail className="h-4 w-4" /> Send us your resume anyway
@@ -280,14 +280,14 @@ export function PressPage() {
         label="Press & Media"
         icon={MessageCircle}
         title="Media resources"
-        sub="Journalists, bloggers, and content creators — everything you need to cover NearbyStay."
+        sub="Journalists, bloggers, and content creators — everything you need to cover HostTheGuest."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <h2 className="mb-3 text-base font-bold text-brand-900">The one-liner</h2>
           <p className="text-sm text-stone-600">
-            NearbyStay connects guests attending Indian events with verified homeowners who have a spare room —
+            HostTheGuest connects guests attending Indian events with verified homeowners who have a spare room —
             so you always stay within walking distance of the celebration.
           </p>
         </Card>
@@ -295,7 +295,7 @@ export function PressPage() {
         <Card>
           <h2 className="mb-3 text-base font-bold text-brand-900">Key facts</h2>
           <ul className="space-y-2 text-sm text-stone-600">
-            <li>📍 Based in Jaipur, India</li>
+            <li>📍 Based in Delhi NCR, India</li>
             <li>🏠 Occasion-based short-term rentals</li>
             <li>🎯 Focus: Weddings, poojas, family events</li>
             <li>🔒 Aadhaar KYC for guests & hosts</li>
@@ -355,7 +355,7 @@ export function HelpPage() {
       section: "For Guests",
       items: [
         { q: "How do I find a stay near my event?", a: "Use the Search page or ask your event organizer to share an Occasion Hub link. The hub shows all verified stays within the set radius of the venue." },
-        { q: "Is it safe to book through NearbyStay?", a: "Yes. All hosts go through Aadhaar-backed KYC verification. Guest reviews and trust scores add further confidence." },
+        { q: "Is it safe to book through HostTheGuest?", a: "Yes. All hosts go through Aadhaar-backed KYC verification. Guest reviews and trust scores add further confidence." },
         { q: "How do I pay?", a: "Payments are processed securely via Razorpay. We accept UPI, debit/credit cards, and net banking. Your money is held until the host confirms." },
         { q: "What if the host cancels?", a: "If a host cancels a confirmed booking, you receive a full refund within 3–5 business days. Our support team will also help you find an alternative." },
         { q: "Can I cancel my booking?", a: "Cancellation policies vary by listing. Check the listing details before booking. Most hosts allow free cancellation up to 48 hours before check-in." },
@@ -366,7 +366,7 @@ export function HelpPage() {
       items: [
         { q: "How do I list my space?", a: "Click 'List Your Space' in the navbar. Fill in your property details, set your price, upload photos, and submit for KYC verification. Once approved, your listing goes live." },
         { q: "When do I get paid?", a: "Payouts are transferred to your registered bank account within 72 hours of guest check-in, after platform fees are deducted." },
-        { q: "What is the platform fee?", a: "NearbyStay charges 8–14% of the booking amount depending on property type. This covers payment processing, support, and platform maintenance." },
+        { q: "What is the platform fee?", a: "HostTheGuest charges 8–14% of the booking amount depending on property type. This covers payment processing, support, and platform maintenance." },
         { q: "Can I decline a booking request?", a: "Yes. You have a response window to accept or decline each request. Frequent declines may affect your listing's search ranking." },
       ],
     },
@@ -479,10 +479,10 @@ export function ContactPage() {
         <div className="flex items-start gap-3">
           <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" />
           <div>
-            <p className="text-sm font-semibold text-stone-900">Based in Jaipur, India</p>
+            <p className="text-sm font-semibold text-stone-900">Based in Delhi NCR, India</p>
             <p className="mt-1 text-sm text-stone-500">
               We operate across India. Our core focus is on cities with high wedding and event activity —
-              Jaipur, Delhi, Mumbai, Udaipur, and more.
+              Delhi NCR, Mumbai, Jaipur, Bengaluru, and more.
             </p>
           </div>
         </div>
@@ -505,7 +505,7 @@ export function SafetyPage() {
   const guestTips = [
     "Only book verified listings with a KYC badge",
     "Read all house rules before confirming",
-    "Pay only through the NearbyStay platform — never via cash or direct transfer",
+    "Pay only through the HostTheGuest platform — never via cash or direct transfer",
     "Save the host's contact number before you travel",
     "Report any safety concerns using the in-app support",
   ];
@@ -516,7 +516,7 @@ export function SafetyPage() {
         label="Safety"
         icon={Shield}
         title="Your safety is our priority"
-        sub="NearbyStay is built with safety at every step — for guests, for hosts, and for families."
+        sub="HostTheGuest is built with safety at every step — for guests, for hosts, and for families."
       />
 
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
@@ -604,7 +604,7 @@ export function TrustPage() {
         label="Trust & Safety"
         icon={ShieldCheck}
         title="How we build trust"
-        sub="Safety isn't a feature — it's the foundation. Here's how every layer of NearbyStay is designed around it."
+        sub="Safety isn't a feature — it's the foundation. Here's how every layer of HostTheGuest is designed around it."
       />
 
       <div className="mb-4 grid gap-4 sm:grid-cols-2">

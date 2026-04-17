@@ -9,7 +9,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="grid gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4 lg:gap-10">
           <div>
-            <p className="text-sm font-semibold text-stone-900">NearbyStay</p>
+            <p className="text-sm font-semibold text-stone-900">HostTheGuest</p>
             <p className="mt-2 max-w-xs text-[13px] leading-relaxed text-stone-400">
               Wherever the occasion is — stay close.
             </p>
@@ -62,7 +62,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t border-stone-200 pt-6 text-center text-[13px] text-stone-400">
-          © {new Date().getFullYear()} NearbyStay · Made with ❤️ in India
+          © {new Date().getFullYear()} HostTheGuest · Made with ❤️ in India
         </div>
       </div>
     </footer>

@@ -79,28 +79,6 @@ const propertyTypes = [
   },
 ];
 
-const occasions = [
-  {
-    label: "Wedding",
-    desc: "Stays for the entire shaadi week",
-    img: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    label: "Pooja & Festival",
-    desc: "Near mandaps & celebration venues",
-    img: "https://images.unsplash.com/photo-1606402179428-a57976d71fa4?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    label: "Birthday & Party",
-    desc: "Party all night, sleep close by",
-    img: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    label: "Family Gathering",
-    desc: "Whole floor for the whole family",
-    img: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80",
-  },
-];
 
 /* ─── Animated counter ─────────────────────────────────── */
 function AnimatedCounter({ target, prefix = "", suffix = "" }) {
@@ -279,8 +257,8 @@ export default function HomePage() {
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           >
             <img
-              src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=900&q=85"
-              alt="Beautiful wedding celebration venue with warm lights"
+              src="https://images.unsplash.com/photo-v5sG5-zYthE?auto=format&fit=crop&w=900&q=85"
+              alt="Traditional Indian wedding ceremony with flower petals"
               className="h-full w-full object-cover"
             />
             {/* Gradient fade on left edge to blend into cream bg */}
@@ -294,7 +272,7 @@ export default function HomePage() {
               transition={{ delay: 0.9, duration: 0.5 }}
             >
               <p className="text-xs font-medium text-stone-500">Nearest stay found</p>
-              <p className="mt-0.5 text-base font-bold text-brand-900">3 min walk · ₹1,800/night</p>
+              <p className="mt-0.5 text-base font-bold text-brand-900">3 min walk from venue</p>
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-green-500" />
                 <span className="text-xs text-stone-500">KYC verified host</span>
@@ -315,8 +293,8 @@ export default function HomePage() {
           {/* Mobile hero image (below text) */}
           <div className="relative h-56 sm:h-72 lg:hidden">
             <img
-              src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80"
-              alt="Wedding celebration"
+              src="https://images.unsplash.com/photo-TcaXNeJciaE?auto=format&fit=crop&w=800&q=80"
+              alt="Traditional Indian wedding celebration"
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-transparent" />
@@ -404,55 +382,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Occasions Image Grid ──────────────────────── */}
-      <section className="bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            className="mb-8 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-          >
-            <h2 className="text-2xl font-bold text-brand-900">Every occasion, covered</h2>
-            <p className="mt-2 text-sm text-stone-500">From intimate poojas to 500-guest weddings</p>
-          </motion.div>
-          <motion.div
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-40px" }}
-          >
-            {occasions.map((oc) => (
-              <motion.div key={oc.label} variants={staggerItem}>
-                <Link
-                  to="/search"
-                  className="card-lift group relative block overflow-hidden rounded-2xl"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={oc.img}
-                      alt={oc.label}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    {/* Dark overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 via-brand-900/20 to-transparent" />
-                    {/* Text */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-sm font-bold text-white">{oc.label}</p>
-                      <p className="mt-0.5 text-[11px] text-white/75">{oc.desc}</p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
       {/* ── How it works ──────────────────────────────── */}
       <section className="bg-white px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-5xl">
@@ -475,7 +404,7 @@ export default function HomePage() {
                 title: "Organizer creates hub",
                 body: "Create an event hub and share the link with all guests. Takes under 2 minutes.",
                 circle: "bg-brand-700",
-                img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=500&q=75",
+                img: "https://images.unsplash.com/photo-BEdxXAiRfRM?auto=format&fit=crop&w=500&q=75",
                 delay: 0,
               },
               {
@@ -484,7 +413,7 @@ export default function HomePage() {
                 body: "Homeowners list spare rooms, get KYC verified, and start earning from local events.",
                 circle: "bg-accent-500",
                 textColor: "text-brand-900",
-                img: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=500&q=75",
+                img: "https://images.unsplash.com/photo-fO5mBw9t0Bg?auto=format&fit=crop&w=500&q=75",
                 delay: 0.1,
               },
               {
@@ -492,7 +421,7 @@ export default function HomePage() {
                 title: "Guest books nearby",
                 body: "Guests see verified stays within 1–2 km of the venue and pay securely online.",
                 circle: "bg-teal-600",
-                img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=500&q=75",
+                img: "https://images.unsplash.com/photo-o-YVbMFIAsI?auto=format&fit=crop&w=500&q=75",
                 delay: 0.2,
               },
             ].map((step) => (
@@ -604,7 +533,7 @@ export default function HomePage() {
               />
               {/* Gradient blend right */}
               <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-brand-800 to-transparent" />
-              {/* Earnings badge */}
+              {/* Verified badge */}
               <motion.div
                 className="absolute bottom-6 left-4 rounded-xl bg-white/95 px-4 py-3 shadow-lg"
                 initial={{ opacity: 0, y: 12 }}
@@ -612,8 +541,8 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.6 }}
               >
-                <p className="text-xs text-stone-500">Last booking earned</p>
-                <p className="text-lg font-bold text-brand-800">₹ 6,400</p>
+                <p className="text-xs text-stone-500">Host status</p>
+                <p className="text-base font-bold text-brand-800">✓ KYC Verified</p>
               </motion.div>
             </motion.div>
 
@@ -634,7 +563,7 @@ export default function HomePage() {
                 </h2>
                 <p className="mt-4 text-[15px] leading-relaxed text-brand-200">
                   List your room, floor, or home during local gatherings.<br />
-                  Earn ₹1,200–15,000 per booking. No investment needed.
+                  You set your own price. No investment needed.
                 </p>
                 <ul className="mt-5 space-y-2 text-[13px] text-brand-200">
                   {["Aadhaar verified guests only", "Secure Razorpay payments", "You set your own rules"].map((t) => (
@@ -654,8 +583,8 @@ export default function HomePage() {
               >
                 <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4">
                   {[
-                    { v: "₹4,200", l: "avg/booking" },
-                    { v: "72h", l: "avg payout" },
+                    { v: "You set", l: "your price" },
+                    { v: "Fast", l: "payout" },
                     { v: "100%", l: "verified guests" },
                     { v: "0%", l: "hidden fees" },
                   ].map((s) => (
