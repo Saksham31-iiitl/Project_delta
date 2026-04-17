@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+client/node_modules_trash/
+
+# Claude Code internal
+.claude/
+
+# Environment files (secrets — never commit these)
+.env
+.env.local
+.env.production
+client/.env
+client/.env.local
+client/.env.production
+server/.env
+server/.env.local
+server/.env.production
+
+# Build output
+client/dist/
+server/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Vite cache
+client/.vite/
