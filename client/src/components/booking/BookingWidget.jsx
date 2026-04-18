@@ -88,7 +88,7 @@ export function BookingWidget({ listing, eventId }) {
         amount,
         currency,
         order_id: order.id,
-        name: "NearbyStay",
+        name: "HostTheGuest",
         description: `Booking ${booking._id}`,
         handler: (response) => {
           verifyMut.mutate({

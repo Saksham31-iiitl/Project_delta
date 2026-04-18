@@ -13,7 +13,8 @@ const bankDetailsSchema = new mongoose.Schema(
 
 const userSchema = new mongoose.Schema(
   {
-    phone: { type: String, required: true, unique: true, index: true },
+    email: { type: String, unique: true, sparse: true, lowercase: true, trim: true, index: true },
+    phone: { type: String, unique: true, sparse: true, index: true },
     fullName: String,
     profilePhotoUrl: String,
     roles: {

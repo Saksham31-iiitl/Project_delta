@@ -24,7 +24,7 @@ export default function OrganizerDashboardPage() {
             <Link to={`/e/${e.inviteCode}`} className="font-medium text-stone-900">
               {e.eventName}
             </Link>
-            <p className="text-xs text-stone-500">nearbystay.in/e/{e.inviteCode}</p>
+            <p className="text-xs text-stone-500">hosttheguest.in/e/{e.inviteCode}</p>
           </li>
         ))}
       </ul>

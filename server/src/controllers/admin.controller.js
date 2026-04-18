@@ -18,8 +18,28 @@ async function rejectListing(req, res) {
 }
 
 async function pendingKyc(req, res) {
-  const users = await User.find({ kycStatus: "pending" });
+  const users = await User.find({ kycStatus: "pending" }).select("fullName email kycStatus aadhaarRef createdAt");
   res.json(users);
+}
+
+async function approveKyc(req, res) {
+  const user = await User.findByIdAndUpdate(
+    req.params.userId,
+    { kycStatus: "verified" },
+    { new: true }
+  );
+  if (!user) return res.status(404).json({ message: "User not found" });
+  res.json({ ok: true, kycStatus: user.kycStatus });
+}
+
+async function rejectKyc(req, res) {
+  const user = await User.findByIdAndUpdate(
+    req.params.userId,
+    { kycStatus: "rejected", aadhaarRef: undefined },
+    { new: true }
+  );
+  if (!user) return res.status(404).json({ message: "User not found" });
+  res.json({ ok: true, kycStatus: user.kycStatus });
 }
 
 async function analytics(req, res) {
@@ -31,4 +51,4 @@ async function analytics(req, res) {
   res.json({ users, activeListings: listings, bookings });
 }
 
-module.exports = { pendingListings, approveListing, rejectListing, pendingKyc, analytics };
+module.exports = { pendingListings, approveListing, rejectListing, pendingKyc, approveKyc, rejectKyc, analytics };

@@ -1,20 +1,17 @@
-const axios = require("axios");
-const { env } = require("../config/env");
+const { sendOtpEmail } = require("./email.service");
 
 function generateOtp() {
   return `${Math.floor(100000 + Math.random() * 900000)}`;
 }
 
-async function sendOtp(phone, otp) {
-  if (!env.MSG91_AUTH_KEY || !env.MSG91_TEMPLATE_ID) {
-    return { mocked: true };
-  }
-  await axios.post(
-    "https://control.msg91.com/api/v5/otp",
-    { mobile: phone, template_id: env.MSG91_TEMPLATE_ID, otp },
-    { headers: { authkey: env.MSG91_AUTH_KEY } }
-  );
-  return { mocked: false };
+/**
+ * Send OTP via the appropriate channel.
+ * Currently: email only.
+ * Future: pass { phone } to add SMS via MSG91 alongside or instead.
+ */
+async function sendOtp({ email, otp }) {
+  await sendOtpEmail(email, otp);
+  return otp;
 }
 
 module.exports = { generateOtp, sendOtp };

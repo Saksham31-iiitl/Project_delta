@@ -13,5 +13,11 @@ export const rejectListing = (id) =>
 
 export const pendingKyc = () => mockOr(() => api.get("/admin/kyc/pending"), () => []);
 
+export const approveKyc = (userId) =>
+  mockOr(() => api.put(`/admin/kyc/${userId}/approve`), () => ({ ok: true, kycStatus: "verified" }));
+
+export const rejectKyc = (userId) =>
+  mockOr(() => api.put(`/admin/kyc/${userId}/reject`), () => ({ ok: true, kycStatus: "rejected" }));
+
 export const adminAnalytics = () =>
   mockOr(() => api.get("/admin/analytics"), () => ({ listings: 12, bookings: 48, revenue: 125000 }));

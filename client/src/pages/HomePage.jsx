@@ -79,6 +79,28 @@ const propertyTypes = [
   },
 ];
 
+const occasions = [
+  {
+    label: "Wedding",
+    desc: "Stays for the entire shaadi week",
+    img: "https://images.pexels.com/photos/32293298/pexels-photo-32293298.jpeg?auto=compress&cs=tinysrgb&w=600&q=80",
+  },
+  {
+    label: "Pooja & Festival",
+    desc: "Near mandaps & celebration venues",
+    img: "https://images.pexels.com/photos/36854238/pexels-photo-36854238.jpeg?auto=compress&cs=tinysrgb&w=600&q=80",
+  },
+  {
+    label: "Birthday & Party",
+    desc: "Party all night, sleep close by",
+    img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=600&q=80",
+  },
+  {
+    label: "Family Gathering",
+    desc: "Whole floor for the whole family",
+    img: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80",
+  },
+];
 
 /* ─── Animated counter ─────────────────────────────────── */
 function AnimatedCounter({ target, prefix = "", suffix = "" }) {
@@ -257,7 +279,7 @@ export default function HomePage() {
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           >
             <img
-              src="https://images.unsplash.com/photo-v5sG5-zYthE?auto=format&fit=crop&w=900&q=85"
+              src="https://images.pexels.com/photos/32293298/pexels-photo-32293298.jpeg?auto=compress&cs=tinysrgb&w=900&q=85"
               alt="Traditional Indian wedding ceremony with flower petals"
               className="h-full w-full object-cover"
             />
@@ -293,37 +315,13 @@ export default function HomePage() {
           {/* Mobile hero image (below text) */}
           <div className="relative h-56 sm:h-72 lg:hidden">
             <img
-              src="https://images.unsplash.com/photo-TcaXNeJciaE?auto=format&fit=crop&w=800&q=80"
+              src="https://images.pexels.com/photos/32293298/pexels-photo-32293298.jpeg?auto=compress&cs=tinysrgb&w=800&q=80"
               alt="Traditional Indian wedding celebration"
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-transparent" />
           </div>
         </div>
-      </section>
-
-      {/* ── Stats ─────────────────────────────────────── */}
-      <section className="border-b border-stone-100 bg-white px-4 py-10 sm:px-6">
-        <motion.div
-          className="mx-auto grid max-w-[640px] grid-cols-3 divide-x divide-stone-200"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-40px" }}
-        >
-          {[
-            { num: 120, suffix: "Cr+", label: "Weddings per year in India" },
-            { num: 4200, prefix: "₹", suffix: " Cr", label: "Market opportunity" },
-            { num: 0, suffix: "", label: "Direct competitors" },
-          ].map((s) => (
-            <motion.div key={s.label} variants={staggerItem} className="px-2 text-center first:pl-0 last:pr-0">
-              <p className="font-display text-2xl font-bold text-brand-800 sm:text-[28px]">
-                <AnimatedCounter target={s.num} prefix={s.prefix || ""} suffix={s.suffix || ""} />
-              </p>
-              <p className="mt-1 text-[13px] text-stone-500">{s.label}</p>
-            </motion.div>
-          ))}
-        </motion.div>
       </section>
 
       {/* ── Property Types Showcase ────────────────────── */}
@@ -382,6 +380,53 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Occasions Image Grid ──────────────────────── */}
+      <section className="bg-white px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <motion.div
+            className="mb-8 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+          >
+            <h2 className="text-2xl font-bold text-brand-900">Every occasion, covered</h2>
+            <p className="mt-2 text-sm text-stone-500">From intimate poojas to 500-guest weddings</p>
+          </motion.div>
+          <motion.div
+            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-40px" }}
+          >
+            {occasions.map((oc) => (
+              <motion.div key={oc.label} variants={staggerItem}>
+                <Link
+                  to="/search"
+                  className="card-lift group relative block overflow-hidden rounded-2xl"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={oc.img}
+                      alt={oc.label}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 via-brand-900/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="text-sm font-bold text-white">{oc.label}</p>
+                      <p className="mt-0.5 text-[11px] text-white/75">{oc.desc}</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── How it works ──────────────────────────────── */}
       <section className="bg-white px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-5xl">
@@ -404,7 +449,7 @@ export default function HomePage() {
                 title: "Organizer creates hub",
                 body: "Create an event hub and share the link with all guests. Takes under 2 minutes.",
                 circle: "bg-brand-700",
-                img: "https://images.unsplash.com/photo-BEdxXAiRfRM?auto=format&fit=crop&w=500&q=75",
+                img: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=500&q=75",
                 delay: 0,
               },
               {
@@ -413,7 +458,7 @@ export default function HomePage() {
                 body: "Homeowners list spare rooms, get KYC verified, and start earning from local events.",
                 circle: "bg-accent-500",
                 textColor: "text-brand-900",
-                img: "https://images.unsplash.com/photo-fO5mBw9t0Bg?auto=format&fit=crop&w=500&q=75",
+                img: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=500&q=75",
                 delay: 0.1,
               },
               {
@@ -421,7 +466,7 @@ export default function HomePage() {
                 title: "Guest books nearby",
                 body: "Guests see verified stays within 1–2 km of the venue and pay securely online.",
                 circle: "bg-teal-600",
-                img: "https://images.unsplash.com/photo-o-YVbMFIAsI?auto=format&fit=crop&w=500&q=75",
+                img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=500&q=75",
                 delay: 0.2,
               },
             ].map((step) => (
@@ -527,7 +572,7 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
             >
               <img
-                src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=600&q=85"
+                src="https://images.pexels.com/photos/33452539/pexels-photo-33452539.jpeg?auto=compress&cs=tinysrgb&w=600&q=85"
                 alt="Comfortable room available for guests"
                 className="h-full w-full object-cover"
               />
@@ -631,6 +676,11 @@ export default function HomePage() {
 
       {/* ── CTA Banner ────────────────────────────────── */}
       <section className="relative overflow-hidden bg-brand-800 px-4 py-14 sm:px-6">
+        <img
+          src="https://images.pexels.com/photos/13636259/pexels-photo-13636259.jpeg?auto=compress&cs=tinysrgb&w=1400&q=80"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-25"
+        />
         <div className="hero-blob animate-float      -top-20 -right-20 h-64 w-64 bg-brand-700/60" />
         <div className="hero-blob animate-float-slow -bottom-16 -left-16 h-48 w-48 bg-accent-500/10" />
         <motion.div
