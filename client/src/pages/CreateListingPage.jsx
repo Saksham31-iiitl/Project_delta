@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "motion/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -126,28 +126,35 @@ const TYPES = [
   { value: "farmhouse", label: "Farmhouse",  desc: "Open grounds & scenic space",   icon: Trees },
 ];
 
-/* ─── Optional map location picker ───────────────────────── */
+/* ─── Map location picker ─────────────────────────────────── */
 const MAP_OPTIONS = {
   disableDefaultUI: true,
   zoomControl: true,
   clickableIcons: false,
 };
 
-function LocationPickerMap({ lat, lng, onPick, onAddressFill }) {
+function LocationPickerMap({ lat, lng, onPick, onAddressFill, autoZoom }) {
   const acRef  = useRef(null);
   const mapRef = useRef(null);
-  const center = { lat: lat || 28.6139, lng: lng || 77.2090 };
+  const center = { lat: lat || 20.5937, lng: lng || 78.9629 }; // India center default
+
+  // Pan + zoom when city auto-geocode updates lat/lng
+  useEffect(() => {
+    if (!mapRef.current || !lat || !lng) return;
+    mapRef.current.panTo({ lat, lng });
+    if (autoZoom) mapRef.current.setZoom(14);
+  }, [lat, lng, autoZoom]);
 
   const onPlaceChanged = () => {
     const place = acRef.current?.getPlace?.();
     const loc   = place?.geometry?.location;
     if (!loc) return;
-    onPick(loc.lat(), loc.lng());
+    onPick(loc.lat(), loc.lng(), true);
     mapRef.current?.panTo({ lat: loc.lat(), lng: loc.lng() });
+    mapRef.current?.setZoom(17);
 
-    // Try to fill address fields from place components
     const comps = place.address_components || [];
-    const get = (type) => comps.find((c) => c.types.includes(type))?.long_name || "";
+    const get   = (type) => comps.find((c) => c.types.includes(type))?.long_name || "";
     onAddressFill({
       street:   [get("street_number"), get("route")].filter(Boolean).join(" "),
       locality: get("sublocality_level_1") || get("locality") || get("administrative_area_level_3"),
@@ -158,13 +165,13 @@ function LocationPickerMap({ lat, lng, onPick, onAddressFill }) {
   };
 
   return (
-    <div className="relative mt-3 h-64 rounded-xl border border-stone-200 sm:h-72">
-      {/* Search bar over map */}
+    <div className="relative h-72 rounded-xl border-2 border-brand-200 sm:h-80">
+      {/* Floating search bar */}
       <div className="absolute left-2 right-2 top-2 z-10">
         <Autocomplete onLoad={(ac) => (acRef.current = ac)} onPlaceChanged={onPlaceChanged}>
           <input
-            placeholder="Search your address to drop pin…"
-            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm shadow-md placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-300"
+            placeholder="Or search your exact street address here…"
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm shadow-lg placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-400"
           />
         </Autocomplete>
       </div>
@@ -174,23 +181,25 @@ function LocationPickerMap({ lat, lng, onPick, onAddressFill }) {
         <GoogleMap
           mapContainerClassName="h-full w-full"
           center={center}
-          zoom={15}
+          zoom={lat && lng ? 14 : 5}
           options={MAP_OPTIONS}
           onLoad={(m) => (mapRef.current = m)}
-          onClick={(e) => onPick(e.latLng.lat(), e.latLng.lng())}
+          onClick={(e) => onPick(e.latLng.lat(), e.latLng.lng(), true)}
         >
-          <Marker
-            position={center}
-            draggable
-            onDragEnd={(e) => onPick(e.latLng.lat(), e.latLng.lng())}
-          />
+          {lat && lng && (
+            <Marker
+              position={{ lat, lng }}
+              draggable
+              onDragEnd={(e) => onPick(e.latLng.lat(), e.latLng.lng(), true)}
+            />
+          )}
         </GoogleMap>
       </div>
 
-      {/* Hint */}
-      <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+      {/* Bottom hint */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
         <span className="rounded-full bg-black/50 px-3 py-1 text-[10px] text-white backdrop-blur-sm">
-          Click on map or drag pin to your exact location
+          Drag the pin or click anywhere to set exact location
         </span>
       </div>
     </div>
@@ -224,8 +233,8 @@ export default function CreateListingPage() {
     libraries: GMAPS_LIBS,
   });
 
-  const [showMap, setShowMap] = useState(false);
   const [pinManuallySet, setPinManuallySet] = useState(false);
+  const [autoZoom, setAutoZoom] = useState(false);
 
   const {
     register,
@@ -269,7 +278,24 @@ export default function CreateListingPage() {
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     );
 
-  const selectedType = watch("type");
+  const selectedType  = watch("type");
+  const watchedCity   = watch("city");
+  const watchedState  = watch("state");
+
+  // Auto-center the map when city is selected (unless host already dragged pin)
+  useEffect(() => {
+    if (!mapsLoaded || !watchedCity || typeof window.google === "undefined") return;
+    if (pinManuallySet) return;
+    const address = [watchedCity, watchedState, "India"].filter(Boolean).join(", ");
+    new window.google.maps.Geocoder().geocode({ address }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        setValue("lat", results[0].geometry.location.lat());
+        setValue("lng", results[0].geometry.location.lng());
+        setAutoZoom(true);
+        setTimeout(() => setAutoZoom(false), 500);
+      }
+    });
+  }, [watchedCity, watchedState, mapsLoaded]); // eslint-disable-line
 
   const mut = useMutation({
     mutationFn: (body) => listingsApi.createListing(body).then((r) => r.data),
@@ -490,55 +516,42 @@ export default function CreateListingPage() {
               <p className="mt-1 text-[11px] text-stone-400">Helps event guests find you easily</p>
             </div>
 
-            {/* ── Optional map pin ── */}
-            {mapsKey && mapsLoaded && (
-              <div className="rounded-xl border border-dashed border-brand-300 bg-brand-50/50 p-3">
-                <button
-                  type="button"
-                  onClick={() => setShowMap((v) => !v)}
-                  className="flex w-full items-center justify-between text-sm font-medium text-brand-700"
-                >
-                  <span className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-brand-500" />
-                    Pin your exact location on map
-                    <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
-                      Optional
-                    </span>
-                  </span>
-                  {showMap
-                    ? <ChevronUp className="h-4 w-4 text-stone-400" />
-                    : <ChevronDown className="h-4 w-4 text-stone-400" />
-                  }
-                </button>
-                <p className="mt-1 text-[11px] text-stone-400">
-                  Helps guests see your stay on the map — more bookings!
+            {/* ── Map pin (always visible when Maps loaded) ── */}
+            {mapsKey && mapsLoaded ? (
+              <div>
+                <p className="mb-1 flex items-center gap-1.5 text-sm font-medium text-stone-700">
+                  <MapPin className="h-3.5 w-3.5 text-brand-500" />
+                  Pin your exact location
+                  <span className="text-[10px] font-normal text-stone-400">(auto-set from city — drag to fine-tune)</span>
                 </p>
-
-                {showMap && (
-                  <LocationPickerMap
-                    lat={watch("lat")}
-                    lng={watch("lng")}
-                    onPick={(lat, lng) => {
-                      setValue("lat", lat);
-                      setValue("lng", lng);
-                      setPinManuallySet(true);
-                    }}
-                    onAddressFill={(fields) => {
-                      if (fields.street)   setValue("street",   fields.street);
-                      if (fields.locality) setValue("locality", fields.locality);
-                      if (fields.city)     setValue("city",     fields.city);
-                      if (fields.state)    setValue("state",    fields.state);
-                      if (fields.pincode)  setValue("pincode",  fields.pincode);
-                    }}
-                  />
-                )}
-
-                {watch("lat") && watch("lng") && (
-                  <p className="mt-2 text-[11px] text-brand-600">
-                    ✓ Pin set — {Number(watch("lat")).toFixed(5)}, {Number(watch("lng")).toFixed(5)}
+                <LocationPickerMap
+                  lat={watch("lat")}
+                  lng={watch("lng")}
+                  autoZoom={autoZoom}
+                  onPick={(lat, lng, manual) => {
+                    setValue("lat", lat);
+                    setValue("lng", lng);
+                    if (manual) setPinManuallySet(true);
+                  }}
+                  onAddressFill={(fields) => {
+                    if (fields.street)   setValue("street",   fields.street);
+                    if (fields.locality) setValue("locality", fields.locality);
+                    if (fields.city)     setValue("city",     fields.city);
+                    if (fields.state)    setValue("state",    fields.state);
+                    if (fields.pincode)  setValue("pincode",  fields.pincode);
+                  }}
+                />
+                {pinManuallySet && (
+                  <p className="mt-1 text-[11px] text-brand-600">
+                    ✓ Pin placed at {Number(watch("lat")).toFixed(5)}, {Number(watch("lng")).toFixed(5)}
                   </p>
                 )}
               </div>
+            ) : (
+              <p className="text-[11px] text-stone-400">
+                <MapPin className="mr-1 inline h-3 w-3" />
+                Map pin will be set automatically from your city address.
+              </p>
             )}
           </div>
         </Section>
