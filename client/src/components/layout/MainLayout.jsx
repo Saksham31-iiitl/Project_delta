@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Outlet } from "react-router-dom";
 import { NavigationProgress } from "@components/common/NavigationProgress.jsx";
+import { ChatBot } from "@components/chat/ChatBot.jsx";
 import { Footer } from "./Footer.jsx";
 import { MockBanner } from "./MockBanner.jsx";
 import { MobileNav } from "./MobileNav.jsx";
@@ -29,6 +30,7 @@ export function MainLayout() {
       </main>
       <Footer />
       <MobileNav />
+      <ChatBot />
       <MockBanner />
     </div>
   );
