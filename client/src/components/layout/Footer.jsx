@@ -1,68 +1,61 @@
-import { Mail, MessageCircle, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const col = "flex flex-col gap-2";
 
 export function Footer() {
   return (
-    <footer className="border-t border-brand-100 bg-brand-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="grid gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4 lg:gap-10">
+    <footer className="bg-brand-900 text-white/70">
+      <div className="mx-auto max-w-6xl px-6 pt-14 pb-8 lg:px-10">
+        <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+          {/* Brand */}
           <div>
-            <p className="text-sm font-semibold text-stone-900">HostTheGuest</p>
-            <p className="mt-2 max-w-xs text-[13px] leading-relaxed text-stone-400">
-              Wherever the occasion is — stay close.
-            </p>
-            <div className="mt-4 flex gap-3 text-stone-400">
-              <a href="#" className="hover:text-brand-600" aria-label="Social">
-                <Share2 className="h-5 w-5" />
-              </a>
-              <a href="#" className="hover:text-brand-600" aria-label="Chat">
-                <MessageCircle className="h-5 w-5" />
-              </a>
-              <a href="#" className="hover:text-brand-600" aria-label="Email">
-                <Mail className="h-5 w-5" />
-              </a>
+            <div className="flex items-center gap-2">
+              <svg width="26" height="26" viewBox="0 0 40 40" fill="none" aria-hidden>
+                <path d="M4 22 L20 6 L36 22 V34 H26 V24 H14 V34 H4 Z" fill="#f5a623"/>
+                <circle cx="20" cy="16" r="3" fill="#fff"/>
+              </svg>
+              <span className="font-display text-xl text-white">HostTheGuest</span>
             </div>
+            <p className="mt-4 max-w-xs text-[13px] leading-relaxed">
+              Stays for weddings, poojas, and the celebrations in-between. Made with love, for all of India.
+            </p>
           </div>
+
+          {/* Guests */}
           <div>
-            <p className="text-[13px] font-semibold text-stone-900">Product</p>
-            <nav className={`${col} mt-3`}>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/search">
-                Search stays
-              </Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/organizer">
-                Create Hub
-              </Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/host/listings/new">
-                List your space
-              </Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/host">
-                Host dashboard
-              </Link>
+            <p className="text-[12px] font-semibold uppercase tracking-[.2em] text-white mb-4">Guests</p>
+            <nav className="flex flex-col gap-2.5 text-[13px]">
+              <Link to="/search" className="hover:text-white transition-colors">Search stays</Link>
+              <Link to="/organizer" className="hover:text-white transition-colors">Occasion Hubs</Link>
+              <Link to="/safety" className="hover:text-white transition-colors">Trust &amp; safety</Link>
+              <Link to="/help" className="hover:text-white transition-colors">Help centre</Link>
             </nav>
           </div>
+
+          {/* Hosts */}
           <div>
-            <p className="text-[13px] font-semibold text-stone-900">Company</p>
-            <nav className={`${col} mt-3`}>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/about">About</Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/blog">Blog</Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/careers">Careers</Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/press">Press</Link>
+            <p className="text-[12px] font-semibold uppercase tracking-[.2em] text-white mb-4">Hosts</p>
+            <nav className="flex flex-col gap-2.5 text-[13px]">
+              <Link to="/host/listings/new" className="hover:text-white transition-colors">List your space</Link>
+              <Link to="/host" className="hover:text-white transition-colors">Host dashboard</Link>
+              <Link to="/contact" className="hover:text-white transition-colors">Host community</Link>
             </nav>
           </div>
+
+          {/* Company */}
           <div>
-            <p className="text-[13px] font-semibold text-stone-900">Support</p>
-            <nav className={`${col} mt-3`}>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/help">Help center</Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/contact">Contact us</Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/safety">Safety</Link>
-              <Link className="text-[13px] text-stone-500 hover:text-brand-700" to="/trust">Trust &amp; safety</Link>
+            <p className="text-[12px] font-semibold uppercase tracking-[.2em] text-white mb-4">Company</p>
+            <nav className="flex flex-col gap-2.5 text-[13px]">
+              <Link to="/about" className="hover:text-white transition-colors">About</Link>
+              <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+              <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
             </nav>
           </div>
         </div>
-        <div className="mt-10 border-t border-stone-200 pt-6 text-center text-[13px] text-stone-400">
-          © {new Date().getFullYear()} HostTheGuest · Made with ❤️ in India
+
+        <div className="goldrule-soft mt-12 mb-6" />
+
+        <div className="flex flex-wrap items-center justify-between gap-4 text-[12px]">
+          <p>© {new Date().getFullYear()} HostTheGuest · Privacy · Terms</p>
+          <p>Made with <span className="text-accent-500">marigolds</span> in India 🌼</p>
         </div>
       </div>
     </footer>

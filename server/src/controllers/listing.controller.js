@@ -3,13 +3,25 @@ const { searchListings } = require("../services/search.service");
 const { geocodeAddress } = require("../utils/geocode");
 const cloudinary = require("../config/cloudinary");
 
-const DELHI_LAT = 28.6139;
-const DELHI_LNG = 77.2090;
+const DELHI_LAT   = 28.6139;
+const DELHI_LNG   = 77.2090;
+const INDIA_LAT   = 20.5937;  // default map center — not a real pin
+const INDIA_LNG   = 78.9629;
+
+const DEFAULT_PINS = [
+  [DELHI_LAT, DELHI_LNG],
+  [INDIA_LAT, INDIA_LNG],
+];
+
+function isDefaultPin(lat, lng) {
+  return DEFAULT_PINS.some(
+    ([dlat, dlng]) => Math.abs(lat - dlat) < 0.05 && Math.abs(lng - dlng) < 0.05
+  );
+}
 
 async function resolveCoords(lat, lng, address) {
   const hasPin =
-    lat != null && lng != null &&
-    !(Math.abs(lat - DELHI_LAT) < 0.001 && Math.abs(lng - DELHI_LNG) < 0.001);
+    lat != null && lng != null && !isDefaultPin(Number(lat), Number(lng));
 
   if (hasPin) return { lat: Number(lat), lng: Number(lng) };
 

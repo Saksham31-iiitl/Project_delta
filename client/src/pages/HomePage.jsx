@@ -6,19 +6,15 @@ import {
   Building2,
   Cake,
   Check,
+  Clock,
   Heart,
   Home,
-  Hotel,
-  Lock,
   MapPin,
   PartyPopper,
-  Phone,
   Search,
-  Shield,
   ShieldCheck,
   Sparkles,
   Star,
-  Trees,
   Users,
   X,
 } from "lucide-react";
@@ -29,135 +25,47 @@ import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 import { MapView } from "@components/search/MapView.jsx";
 import { Button } from "@components/common/Button.jsx";
 import { PageWrapper } from "@components/layout/PageWrapper.jsx";
+import { ListingCard } from "@components/listings/ListingCard.jsx";
 import * as listingsApi from "@api/listings.api.js";
 import { formatPricePerNight, listingDisplayTitle, listingLocationLine } from "@utils/format.js";
+import { getRecentlyViewed } from "@utils/recentlyViewed.js";
 
-/* ─── helpers ─────────────────────────────────────────── */
+const GMAPS_LIBS = ["places"];
+const DEFAULT_CENTER = { lat: 26.8467, lng: 80.9462 }; // Lucknow
 
 const occasionChips = [
-  { label: "Wedding",    icon: Heart,       to: "/search" },
-  { label: "Pooja",      icon: Sparkles,    to: "/search" },
-  { label: "Birthday",   icon: Cake,        to: "/search" },
-  { label: "Navratri",   icon: Sparkles,    to: "/search" },
-  { label: "Hospital",   icon: Building2,   to: "/search" },
-  { label: "Party",      icon: PartyPopper, to: "/search" },
-  { label: "Gathering",  icon: Users,       to: "/search" },
-  { label: "Any occasion", icon: MapPin,    to: "/search" },
+  { label: "Wedding week",    icon: Heart },
+  { label: "Pooja & Havan",  icon: Sparkles },
+  { label: "Birthday",       icon: Cake },
+  { label: "Navratri",       icon: Sparkles },
+  { label: "Family reunion", icon: Users },
+  { label: "Hospital stay",  icon: Building2 },
+  { label: "Party",          icon: PartyPopper },
 ];
 
-const propertyTypes = [
-  {
-    label: "Room",
-    desc: "Private room in a family home",
-    icon: Home,
-    img: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=400&q=80",
-    from: "from-brand-700",
-    to: "to-brand-500",
-  },
-  {
-    label: "Floor",
-    desc: "Entire floor, your own entrance",
-    icon: Building2,
-    img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=400&q=80",
-    from: "from-brand-800",
-    to: "to-brand-600",
-  },
-  {
-    label: "Home",
-    desc: "Full house, perfect for families",
-    icon: Hotel,
-    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
-    from: "from-accent-600",
-    to: "to-accent-500",
-  },
-  {
-    label: "Suite",
-    desc: "Premium suite with extra comforts",
-    icon: Star,
-    img: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=400&q=80",
-    from: "from-teal-600",
-    to: "to-brand-500",
-  },
-  {
-    label: "Farmhouse",
-    desc: "Scenic space with open grounds",
-    icon: Trees,
-    img: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=400&q=80",
-    from: "from-brand-900",
-    to: "to-brand-700",
-  },
-];
+/* ─── Stagger variants ──────────────────────────────────── */
+const staggerContainer = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
+const staggerItem = {
+  hidden: { opacity: 0, y: 22 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+};
 
-const occasions = [
-  {
-    label: "Wedding",
-    desc: "Stays for the entire shaadi week",
-    img: "https://images.pexels.com/photos/32293298/pexels-photo-32293298.jpeg?auto=compress&cs=tinysrgb&w=600&q=80",
-  },
-  {
-    label: "Pooja & Festival",
-    desc: "Near mandaps & celebration venues",
-    img: "https://images.pexels.com/photos/36854238/pexels-photo-36854238.jpeg?auto=compress&cs=tinysrgb&w=600&q=80",
-  },
-  {
-    label: "Birthday & Party",
-    desc: "Party all night, sleep close by",
-    img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    label: "Family Gathering",
-    desc: "Whole floor for the whole family",
-    img: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80",
-  },
-];
-
-/* ─── Animated counter ─────────────────────────────────── */
-function AnimatedCounter({ target, prefix = "", suffix = "" }) {
+/* ─── Animated counter ──────────────────────────────────── */
+function AnimatedCounter({ target, suffix = "" }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const motionVal = useMotionValue(0);
   const spring = useSpring(motionVal, { stiffness: 60, damping: 18 });
   const [display, setDisplay] = useState("0");
 
-  useEffect(() => {
-    if (inView) motionVal.set(typeof target === "number" ? target : 0);
-  }, [inView, motionVal, target]);
+  useEffect(() => { if (inView && typeof target === "number") motionVal.set(target); }, [inView, motionVal, target]);
+  useEffect(() => spring.on("change", (v) => { if (typeof target === "number") setDisplay(Math.round(v).toLocaleString("en-IN")); }), [spring, target]);
 
-  useEffect(() => {
-    return spring.on("change", (v) => {
-      if (typeof target === "number") setDisplay(Math.round(v).toLocaleString("en-IN"));
-    });
-  }, [spring, target]);
-
-  if (typeof target !== "number") {
-    return (
-      <span ref={ref} className={inView ? "animate-fade-up" : "opacity-0"}>
-        {prefix}{target}{suffix}
-      </span>
-    );
-  }
-  return (
-    <span ref={ref}>
-      {prefix}{display}{suffix}
-    </span>
-  );
+  if (typeof target !== "number") return <span ref={ref}>{target}{suffix}</span>;
+  return <span ref={ref}>{display}{suffix}</span>;
 }
 
-/* ─── stagger container ────────────────────────────────── */
-const staggerContainer = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
-};
-const staggerItem = {
-  hidden: { opacity: 0, y: 22 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
-};
-
-/* ─── Map explorer constants ───────────────────────────── */
-const DEFAULT_CENTER = { lat: 28.6139, lng: 77.2090 }; // New Delhi
-const GMAPS_LIBS = ["places"];
-
-/* ─── Mini popup on pin click ──────────────────────────── */
+/* ─── Map mini-popup ────────────────────────────────────── */
 function HomeMapPopup({ listing, onClose }) {
   if (!listing) return null;
   const title   = listingDisplayTitle(listing);
@@ -169,18 +77,12 @@ function HomeMapPopup({ listing, onClose }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.2 }}
-      className="absolute bottom-4 left-1/2 z-20 w-[min(92%,340px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl"
+      className="absolute bottom-20 left-1/2 z-20 w-[min(92%,340px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl"
     >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-500 shadow hover:bg-stone-100"
-      >
+      <button type="button" onClick={onClose} className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-500 shadow hover:bg-stone-100">
         <X className="h-4 w-4" />
       </button>
-      {listing.photos?.[0] && (
-        <img src={listing.photos[0]} alt={title} className="h-28 w-full object-cover" />
-      )}
+      {listing.photos?.[0] && <img src={listing.photos[0]} alt={title} className="h-28 w-full object-cover" />}
       <div className="p-3">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-600">{listing.type}</p>
         <p className="mt-0.5 truncate text-sm font-bold text-stone-900">{title}</p>
@@ -190,12 +92,9 @@ function HomeMapPopup({ listing, onClose }) {
             {listing.beds      && <span className="flex items-center gap-1"><Bed  className="h-3 w-3" />{listing.beds}</span>}
             {listing.bathrooms && <span className="flex items-center gap-1"><Bath className="h-3 w-3" />{listing.bathrooms}</span>}
           </div>
-          <p className="text-sm font-bold text-brand-700">{formatPricePerNight(listing.pricePerNight)}</p>
+          <p className="font-mono text-sm font-bold text-brand-700">{formatPricePerNight(listing.pricePerNight)}</p>
         </div>
-        <Link
-          to={`/listings/${listing._id}`}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 py-2 text-xs font-semibold text-white hover:bg-brand-700"
-        >
+        <Link to={`/listings/${listing._id}`} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-700 py-2 text-xs font-semibold text-white hover:bg-brand-800">
           View listing <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -203,117 +102,69 @@ function HomeMapPopup({ listing, onClose }) {
   );
 }
 
-/* ─── Map section inner (needs Maps loaded) ────────────── */
+/* ─── Map explorer inner ────────────────────────────────── */
 function MapExplorerInner({ isLoaded }) {
   const acRef    = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const [center, setCenter]       = useState(DEFAULT_CENTER);
-  const [areaLabel, setAreaLabel] = useState("New Delhi");
+  const [areaLabel, setAreaLabel] = useState("Lucknow");
   const [selected, setSelected]   = useState(null);
 
   const qParams = useMemo(() => ({ lat: center.lat, lng: center.lng, radiusKm: 5 }), [center]);
-
   const { data: listings = [] } = useQuery({
     queryKey: ["home-map-listings", qParams],
     queryFn: () => listingsApi.searchListings(qParams).then((r) => r.data),
     staleTime: 2 * 60 * 1000,
   });
 
-  const applyLocation = (lat, lng, label) => {
-    setCenter({ lat, lng });
-    setAreaLabel(label);
-    setSelected(null);
-  };
+  const applyLocation = (lat, lng, label) => { setCenter({ lat, lng }); setAreaLabel(label); setSelected(null); };
 
   const onPlaceChanged = () => {
     const place = acRef.current?.getPlace?.();
     const loc   = place?.geometry?.location;
     if (!loc) return;
-    const label = place.formatted_address
-      || [place.name, place.vicinity].filter(Boolean).join(", ")
-      || "";
-    applyLocation(loc.lat(), loc.lng(), label);
+    applyLocation(loc.lat(), loc.lng(), place.formatted_address || place.name || "");
   };
 
-  // Geocode whatever is in the input when user presses Enter or clicks Search
   const geocodeInput = () => {
     const text = inputRef.current?.value?.trim();
     if (!text) return;
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ address: text }, (results, status) => {
+    new window.google.maps.Geocoder().geocode({ address: text }, (results, status) => {
       if (status === "OK" && results[0]) {
-        const loc   = results[0].geometry.location;
-        const label = results[0].formatted_address || text;
-        applyLocation(loc.lat(), loc.lng(), label);
+        applyLocation(results[0].geometry.location.lat(), results[0].geometry.location.lng(), results[0].formatted_address || text);
       }
     });
   };
 
   const goToSearch = () => {
     const p = new URLSearchParams();
-    p.set("lat", String(center.lat));
-    p.set("lng", String(center.lng));
-    p.set("area", areaLabel);
+    p.set("lat", String(center.lat)); p.set("lng", String(center.lng)); p.set("area", areaLabel);
     navigate(`/search?${p.toString()}`);
   };
 
   return (
     <div className="relative h-[480px] w-full rounded-3xl border border-stone-200 shadow-xl sm:h-[540px]">
-
-      {/* ── Map (clipped to rounded corners) ── */}
       <div className="absolute inset-0 overflow-hidden rounded-3xl">
-        <MapView
-          center={center}
-          listings={listings}
-          radiusKm={5}
-          isLoaded={isLoaded}
-          selectedId={selected?._id}
-          onListingClick={setSelected}
-        />
-        {/* Bottom gradient */}
-        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center bg-gradient-to-t from-brand-900/60 to-transparent px-4 pb-5 pt-16 pointer-events-none" />
+        <MapView center={center} listings={listings} radiusKm={5} isLoaded={isLoaded} selectedId={selected?._id} onListingClick={setSelected} />
       </div>
 
-      {/* ── Floating search bar (outside overflow clip) ── */}
       <div className="absolute left-1/2 top-4 z-20 w-[min(92%,500px)] -translate-x-1/2">
-        <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/97 px-3 py-2.5 shadow-lg backdrop-blur-sm">
           <Search className="h-4 w-4 shrink-0 text-stone-400" />
           {isLoaded ? (
-            <Autocomplete
-              onLoad={(ac) => (acRef.current = ac)}
-              onPlaceChanged={onPlaceChanged}
-            >
-              <input
-                ref={inputRef}
-                className="min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
-                placeholder="Search any area, venue or city…"
-                defaultValue={areaLabel}
-                key={areaLabel}
-                style={{ width: "100%" }}
-                onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }}
-              />
+            <Autocomplete onLoad={(ac) => (acRef.current = ac)} onPlaceChanged={onPlaceChanged}>
+              <input ref={inputRef} className="min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none" placeholder="Search any venue, city or area…" defaultValue={areaLabel} key={areaLabel} style={{ width: "100%" }} onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }} />
             </Autocomplete>
           ) : (
-            <input
-              ref={inputRef}
-              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-stone-500 focus:outline-none"
-              placeholder="Enter area or city…"
-              defaultValue={areaLabel}
-              onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }}
-            />
+            <input ref={inputRef} className="min-w-0 flex-1 border-0 bg-transparent text-sm text-stone-500 focus:outline-none" placeholder="Enter city or area…" defaultValue={areaLabel} onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }} />
           )}
-          <button
-            type="button"
-            onClick={geocodeInput}
-            className="shrink-0 rounded-xl bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 active:scale-95 transition-transform"
-          >
+          <button type="button" onClick={geocodeInput} className="shrink-0 rounded-xl bg-brand-700 px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-800 active:scale-95 transition-transform">
             Search
           </button>
         </div>
       </div>
 
-      {/* ── Listing count badge ── */}
       {listings.length > 0 && (
         <div className="absolute bottom-16 left-4 z-20">
           <div className="rounded-full border border-brand-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-brand-700 shadow backdrop-blur-sm">
@@ -322,55 +173,28 @@ function MapExplorerInner({ isLoaded }) {
         </div>
       )}
 
-      {/* ── Pin popup ── */}
       <HomeMapPopup listing={selected} onClose={() => setSelected(null)} />
 
-      {/* ── Bottom CTA (outside overflow clip) ── */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-center px-4 pb-5">
-        <button
-          type="button"
-          onClick={goToSearch}
-          className="flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-brand-800 shadow-xl hover:bg-brand-50 transition-colors"
-        >
-          <MapPin className="h-4 w-4 text-brand-600" />
-          Explore all stays on map
-          <ArrowRight className="h-4 w-4 text-brand-600" />
+      <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center">
+        <button type="button" onClick={goToSearch} className="flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-brand-800 shadow-xl hover:bg-brand-50 transition-colors">
+          <MapPin className="h-4 w-4 text-brand-600" /> Explore all stays on map <ArrowRight className="h-4 w-4 text-brand-600" />
         </button>
       </div>
     </div>
   );
 }
 
-/* ─── Map section wrapper (handles API key check) ──────── */
 function HomeMapSection() {
   const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { isLoaded, loadError } = useJsApiLoader({ id: "nearbystay-map", googleMapsApiKey: key || "", libraries: GMAPS_LIBS });
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: "nearbystay-map",
-    googleMapsApiKey: key || "",
-    libraries: GMAPS_LIBS,
-  });
-
-  // Fallback if no key
   if (!key || loadError) {
     return (
       <section className="bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-brand-900">Explore stays near any event</h2>
-            <p className="mt-2 text-sm text-stone-500">Find verified rooms within walking distance of your venue</p>
-          </div>
-          <Link to="/search">
-            <div className="group relative flex h-64 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 to-brand-600 shadow-xl sm:h-80">
-              <div className="absolute inset-0 opacity-20"
-                style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px), radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)", backgroundSize: "40px 40px" }}
-              />
-              <div className="relative z-10 text-center">
-                <MapPin className="mx-auto mb-3 h-12 w-12 text-accent-400" />
-                <p className="text-xl font-bold text-white">Browse all stays →</p>
-                <p className="mt-1 text-sm text-brand-200">Filter by area, type & price</p>
-              </div>
-            </div>
+        <div className="mx-auto max-w-5xl text-center">
+          <h2 className="font-display text-[40px] text-brand-900">Explore stays near any event</h2>
+          <Link to="/search" className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-700 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-800">
+            Browse all stays <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
@@ -378,43 +202,19 @@ function HomeMapSection() {
   }
 
   return (
-    <section className="bg-white px-4 py-14 sm:px-6">
+    <section className="bg-cream px-4 py-14 sm:px-6">
       <div className="mx-auto max-w-5xl">
-        <motion.div
-          className="mb-8 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-        >
-          <span className="mb-3 inline-block rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-600">
-            Live map
-          </span>
-          <h2 className="text-2xl font-bold text-brand-900">Explore stays near any event</h2>
-          <p className="mt-2 text-sm text-stone-500">
-            Search any city or venue — see verified stays as pins on the map
-          </p>
+        <motion.div className="mb-8 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+          <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-stone-400 mb-2">Live map</p>
+          <h2 className="font-display text-[40px] leading-tight text-brand-900">Explore stays <em className="text-accent-600">near any event</em></h2>
+          <p className="mt-2 text-sm text-stone-500">Search any city or venue — see verified stays as pins on the map</p>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
           <MapExplorerInner isLoaded={isLoaded} />
         </motion.div>
-
-        {/* How-to hints */}
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-stone-400">
-          {[
-            "🔍  Search any area or venue",
-            "📍  Click a pin to see listing details",
-            "🏠  Tap 'Explore all' for full search",
-          ].map((hint) => (
-            <span key={hint} className="rounded-full border border-stone-100 bg-stone-50 px-3 py-1.5">
-              {hint}
-            </span>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-stone-400">
+          {["🔍  Search any area or venue", "📍  Click a pin to preview", "🏠  Tap 'Explore all' for full search"].map((h) => (
+            <span key={h} className="rounded-full border border-stone-100 bg-white px-3 py-1.5">{h}</span>
           ))}
         </div>
       </div>
@@ -422,10 +222,18 @@ function HomeMapSection() {
   );
 }
 
-/* ─── Component ────────────────────────────────────────── */
+/* ─── Main page ─────────────────────────────────────────── */
 export default function HomePage() {
-  const [heroQuery, setHeroQuery] = useState("");
   const navigate = useNavigate();
+  const [heroQuery, setHeroQuery] = useState("");
+  const [recentlyViewed] = useState(() => getRecentlyViewed());
+
+  /* Featured listings for "Nearby Stays" section */
+  const { data: featuredListings = [] } = useQuery({
+    queryKey: ["home-featured"],
+    queryFn: () => listingsApi.searchListings({ lat: 26.8467, lng: 80.9462, radiusKm: 50 }).then((r) => r.data.slice(0, 4)),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const onHeroSearch = (e) => {
     e.preventDefault();
@@ -436,555 +244,325 @@ export default function HomePage() {
   };
 
   return (
-    <PageWrapper className="max-w-none px-0">
+    <div className="bg-cream">
 
-      {/* ── Hero ──────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-cream">
-        <div className="mx-auto flex max-w-7xl flex-col lg:flex-row lg:min-h-[88vh]">
+      {/* ══ HERO ═══════════════════════════════════════════ */}
+      <section className="relative grid overflow-hidden lg:grid-cols-[1.1fr_.9fr] lg:min-h-[90vh]">
 
-          {/* Left — text content */}
-          <div className="relative z-10 flex flex-1 flex-col justify-center px-6 pb-12 pt-16 sm:px-10 sm:pt-20 lg:py-24 lg:pl-16 lg:pr-10">
-            {/* Blobs only on left panel */}
-            <div className="hero-blob animate-float      -top-16 -left-16 h-64 w-64 bg-brand-200/50" />
-            <div className="hero-blob animate-float-x    bottom-10 left-1/2  h-32 w-32 bg-accent-400/20" />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="relative mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-medium text-brand-700"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
-              </span>
-              Find stays near your event — in minutes
-            </motion.div>
-
-            <motion.h1
-              className="relative font-display text-[32px] font-bold leading-tight text-brand-900 sm:text-[44px] lg:text-[48px]"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Wherever the<br />occasion is,
-              <br />
-              <span className="text-accent-500">stay close.</span>
-            </motion.h1>
-
-            <motion.p
-              className="relative mt-4 max-w-md text-base text-stone-500"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Find verified rooms and homes within walking distance of any wedding, pooja, or family gathering.
-            </motion.p>
-
-            {/* Search bar */}
-            <motion.form
-              onSubmit={onHeroSearch}
-              className="relative mt-8 max-w-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="group flex h-14 items-center gap-2 rounded-2xl border-2 border-stone-200 bg-white px-4 shadow-md transition-all duration-200 focus-within:border-brand-400 focus-within:shadow-lg focus-within:shadow-brand-100">
-                <Search className="h-5 w-5 shrink-0 text-stone-400 transition-colors group-focus-within:text-brand-500" aria-hidden />
-                <input
-                  type="search"
-                  value={heroQuery}
-                  onChange={(e) => setHeroQuery(e.target.value)}
-                  placeholder="Enter venue or area name…"
-                  className="min-w-0 flex-1 border-0 bg-transparent text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-0 sm:text-base"
-                  aria-label="Search venue or area"
-                />
-                <Button type="submit" size="md" variant="accent" className="btn-glow shrink-0">
-                  Search
-                </Button>
-              </div>
-            </motion.form>
-
-            {/* Occasion chips */}
-            <motion.div
-              className="relative mt-5 max-w-lg"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.45 }}
-            >
-              <p className="mb-2 text-xs font-medium text-stone-500">Popular occasions</p>
-              <motion.div
-                className="chip-scroll flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1"
-                variants={staggerContainer}
-                initial="hidden"
-                animate="show"
-              >
-                {occasionChips.map((chip) => {
-                  const ChipIcon = chip.icon;
-                  return (
-                    <motion.div key={chip.label} variants={staggerItem}>
-                      <Link
-                        to={chip.to}
-                        className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-700 transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 hover:shadow-sm"
-                      >
-                        <ChipIcon className="h-3.5 w-3.5 text-brand-500" aria-hidden />
-                        {chip.label}
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            </motion.div>
-
-            <motion.p
-              className="relative mt-6 text-sm text-stone-500"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              Hosting an event?{" "}
-              <Link to="/organizer" className="font-medium text-accent-600 underline-offset-2 hover:underline">
-                Create an Occasion Hub →
-              </Link>
-            </motion.p>
-          </div>
-
-          {/* Right — hero image */}
+        {/* Left — text */}
+        <div className="relative motif-kolam px-6 pb-16 pt-14 sm:px-10 lg:pl-16 lg:pr-14 lg:py-24 flex flex-col justify-center">
+          {/* Eyebrow */}
           <motion.div
-            className="relative hidden lg:flex lg:w-[48%] lg:shrink-0"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+            className="inline-flex w-fit items-center gap-2.5 rounded-full border border-brand-800/15 bg-white px-3.5 py-1.5 text-[12px] font-medium text-brand-800"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           >
-            <img
-              src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85"
-              alt="Comfortable modern room available for guests"
-              className="h-full w-full object-cover"
-            />
-            {/* Gradient fade on left edge to blend into cream bg */}
-            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-cream to-transparent" />
-
-            {/* Floating info card over image */}
-            <motion.div
-              className="absolute bottom-10 left-6 rounded-2xl border border-white/30 bg-white/90 px-5 py-4 shadow-xl backdrop-blur-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9, duration: 0.5 }}
-            >
-              <p className="text-xs font-medium text-stone-500">Nearest stay found</p>
-              <p className="mt-0.5 text-base font-bold text-brand-900">3 min walk from venue</p>
-              <div className="mt-2 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-xs text-stone-500">KYC verified host</span>
-              </div>
-            </motion.div>
-
-            {/* Floating distance badge */}
-            <motion.div
-              className="absolute right-6 top-10 rounded-xl bg-brand-800 px-3 py-2 text-center shadow-lg"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <p className="text-lg font-bold text-accent-400">500m</p>
-              <p className="text-[10px] text-brand-200">from venue</p>
-            </motion.div>
+            <span className="relative inline-flex h-2 w-2">
+              <span className="animate-pulse-ring absolute inset-0 rounded-full bg-accent-400/70" />
+              <span className="relative h-2 w-2 rounded-full bg-accent-500" />
+            </span>
+            Stays &amp; ceremonies, without the scramble
           </motion.div>
 
-          {/* Mobile hero image (below text) */}
-          <div className="relative h-56 sm:h-72 lg:hidden">
-            <img
-              src="https://images.pexels.com/photos/32293298/pexels-photo-32293298.jpeg?auto=compress&cs=tinysrgb&w=800&q=80"
-              alt="Traditional Indian wedding celebration"
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-transparent" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Property Types Showcase ────────────────────── */}
-      <section className="bg-brand-50 px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            className="mb-8 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
+          {/* Headline */}
+          <motion.h1
+            className="font-display mt-7 text-[52px] leading-[.95] text-brand-900 sm:text-[64px] lg:text-[72px]"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08 }}
           >
-            <h2 className="text-2xl font-bold text-brand-900">Every type of stay</h2>
-            <p className="mt-2 text-sm text-stone-500">From a spare room to a full farmhouse — verified &amp; near your event</p>
-          </motion.div>
-          <motion.div
-            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-40px" }}
-          >
-            {propertyTypes.map((pt) => {
-              const PTIcon = pt.icon;
-              return (
-                <motion.div key={pt.label} variants={staggerItem}>
-                  <Link
-                    to={`/search?type=${pt.label.toLowerCase()}`}
-                    className="card-lift group block overflow-hidden rounded-2xl border border-stone-200 bg-white"
-                  >
-                    {/* Real photo with gradient overlay */}
-                    <div className="relative h-32 overflow-hidden">
-                      <img
-                        src={pt.img}
-                        alt={pt.label}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      {/* Dark gradient overlay */}
-                      <div className={`absolute inset-0 bg-gradient-to-t ${pt.from}/60 to-transparent opacity-80`} />
-                      {/* Icon badge */}
-                      <div className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                        <PTIcon className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-semibold text-brand-900">{pt.label}</p>
-                      <p className="mt-0.5 text-[11px] leading-snug text-stone-500">{pt.desc}</p>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
-      </section>
+            Stay close <br /> to the{" "}
+            <em className="text-accent-600">celebration.</em>
+          </motion.h1>
 
-      {/* ── Occasions Image Grid ──────────────────────── */}
-      <section className="bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            className="mb-8 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
+          <motion.p
+            className="mt-6 max-w-md text-base leading-relaxed text-stone-600"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.16 }}
           >
-            <h2 className="text-2xl font-bold text-brand-900">Every occasion, covered</h2>
-            <p className="mt-2 text-sm text-stone-500">From intimate poojas to 500-guest weddings</p>
-          </motion.div>
-          <motion.div
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-40px" }}
+            Verified rooms, floors &amp; homes within walking distance of any wedding, pooja, or family gathering —
+            hosted by real neighbours, not hotel chains.
+          </motion.p>
+
+          {/* Search bar */}
+          <motion.form
+            onSubmit={onHeroSearch}
+            className="mt-10 flex overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_24px_60px_-30px_rgba(15,45,30,.25)]"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.24 }}
           >
-            {occasions.map((oc) => (
-              <motion.div key={oc.label} variants={staggerItem}>
-                <Link
-                  to="/search"
-                  className="card-lift group relative block overflow-hidden rounded-2xl"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={oc.img}
-                      alt={oc.label}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 via-brand-900/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-sm font-bold text-white">{oc.label}</p>
-                      <p className="mt-0.5 text-[11px] text-white/75">{oc.desc}</p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Map Explorer ──────────────────────────────── */}
-      <HomeMapSection />
-
-      {/* ── How it works ──────────────────────────────── */}
-      <section className="bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-          >
-            <h2 className="text-2xl font-bold text-stone-900">How it works</h2>
-            <p className="mx-auto mt-2 max-w-lg text-base text-stone-500">
-              Three simple steps. One powerful platform.
-            </p>
-          </motion.div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {[
-              {
-                n: "01",
-                title: "Organizer creates hub",
-                body: "Create an event hub and share the link with all guests. Takes under 2 minutes.",
-                circle: "bg-brand-700",
-                img: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=500&q=75",
-                delay: 0,
-              },
-              {
-                n: "02",
-                title: "Host lists their space",
-                body: "Homeowners list spare rooms, get KYC verified, and start earning from local events.",
-                circle: "bg-accent-500",
-                textColor: "text-brand-900",
-                img: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=500&q=75",
-                delay: 0.1,
-              },
-              {
-                n: "03",
-                title: "Guest books nearby",
-                body: "Guests see verified stays within 1–2 km of the venue and pay securely online.",
-                circle: "bg-teal-600",
-                img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=500&q=75",
-                delay: 0.2,
-              },
-            ].map((step) => (
-              <motion.article
-                key={step.n}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-30px" }}
-                transition={{ duration: 0.45, delay: step.delay }}
-                whileHover={{ y: -4, boxShadow: "0 12px 40px rgba(26,71,49,0.1)" }}
-                className="group overflow-hidden rounded-2xl border border-stone-200 bg-white transition-shadow"
-              >
-                {/* Step image */}
-                <div className="relative h-36 overflow-hidden">
-                  <img
-                    src={step.img}
-                    alt={step.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className={`absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white ${step.circle} ${step.textColor || ""}`}>
-                    {step.n}
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="text-base font-semibold text-stone-900">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-stone-500">{step.body}</p>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Feature cards ─────────────────────────────── */}
-      <section className="bg-cream px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <motion.h2
-            className="mb-8 text-center text-2xl font-bold text-brand-900"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-          >
-            Why guests love it
-          </motion.h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                title: "Walk to the venue",
-                desc: "Find stays within 500m–2km of the celebration. Walk to the mehendi at 2 AM. Stay connected.",
-                icon: MapPin,
-                bg: "bg-brand-700",
-                delay: 0,
-              },
-              {
-                title: "Verified hosts",
-                desc: "Aadhaar-backed KYC and trust signals so you always know who you're staying with.",
-                icon: ShieldCheck,
-                bg: "bg-brand-500",
-                delay: 0.1,
-              },
-              {
-                title: "Built for India",
-                desc: "Weddings, poojas, family events — flows and messaging tuned for how India celebrates.",
-                icon: Sparkles,
-                bg: "bg-accent-500",
-                delay: 0.2,
-              },
-            ].map((f) => (
-              <motion.article
-                key={f.title}
-                initial={{ opacity: 0, scale: 0.94 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, margin: "-30px" }}
-                transition={{ duration: 0.4, delay: f.delay }}
-                whileHover={{ y: -5, boxShadow: "0 16px 48px rgba(26,71,49,0.12)" }}
-                className="rounded-2xl border border-stone-200 bg-white p-6 transition-shadow"
-              >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${f.bg}`}>
-                  <f.icon className="h-6 w-6 text-white" aria-hidden />
-                </div>
-                <h3 className="mt-5 text-base font-semibold text-stone-900">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-stone-500">{f.desc}</p>
-              </motion.article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── For homeowners ────────────────────────────── */}
-      <section className="border-t border-brand-100 bg-brand-50 px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 to-brand-700 md:flex md:items-stretch">
-            {/* Left — real room photo */}
-            <motion.div
-              className="relative hidden md:block md:w-[40%] md:shrink-0"
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <img
-                src="https://images.pexels.com/photos/33452539/pexels-photo-33452539.jpeg?auto=compress&cs=tinysrgb&w=600&q=85"
-                alt="Comfortable room available for guests"
-                className="h-full w-full object-cover"
+            <label className="search-field flex-1 px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-stone-400">Occasion / Venue</p>
+              <input
+                className="mt-1 w-full bg-transparent text-[14px] font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                placeholder="Sharma wedding, Jaipur"
+                value={heroQuery}
+                onChange={(e) => setHeroQuery(e.target.value)}
               />
-              {/* Gradient blend right */}
-              <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-brand-800 to-transparent" />
-              {/* Verified badge */}
-              <motion.div
-                className="absolute bottom-6 left-4 rounded-xl bg-white/95 px-4 py-3 shadow-lg"
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.6 }}
-              >
-                <p className="text-xs text-stone-500">Host status</p>
-                <p className="text-base font-bold text-brand-800">✓ KYC Verified</p>
-              </motion.div>
-            </motion.div>
+            </label>
+            <button type="submit" className="flex items-center justify-center gap-2 bg-brand-800 px-7 text-[14px] font-semibold text-white hover:bg-brand-900 transition-colors">
+              <Search className="h-4 w-4" /> Find my stay
+            </button>
+          </motion.form>
 
-            {/* Right — content */}
-            <div className="flex flex-col justify-center px-5 py-8 sm:px-8 sm:py-10 md:flex-1">
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-accent-500/20 px-3 py-1 text-xs font-semibold text-accent-400">
-                  <Star className="h-3 w-3" /> For Homeowners
-                </p>
-                <h2 className="font-display text-[26px] font-bold leading-snug text-white">
-                  Spare Room?<br />
-                  <span className="text-accent-400">Make it pay.</span>
-                </h2>
-                <p className="mt-4 text-[15px] leading-relaxed text-brand-200">
-                  List your room, floor, or home during local gatherings.<br />
-                  You set your own price. No investment needed.
-                </p>
-                <ul className="mt-5 space-y-2 text-[13px] text-brand-200">
-                  {["Aadhaar verified guests only", "Secure Razorpay payments", "You set your own rules"].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 shrink-0 text-accent-400" aria-hidden />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-              <motion.div
-                className="mt-8"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.15 }}
-              >
-                <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4">
-                  {[
-                    { v: "You set", l: "your price" },
-                    { v: "Fast", l: "payout" },
-                    { v: "100%", l: "verified guests" },
-                    { v: "0%", l: "hidden fees" },
-                  ].map((s) => (
-                    <div key={s.l} className="rounded-xl bg-white/10 px-3 py-3 text-center backdrop-blur-sm">
-                      <p className="text-base font-bold text-accent-400">{s.v}</p>
-                      <p className="text-[11px] text-brand-200">{s.l}</p>
-                    </div>
-                  ))}
-                </div>
-                <Link to="/host/listings/new">
-                  <Button size="lg" variant="accent" className="btn-glow w-full sm:w-auto">
-                    List Your Space →
-                  </Button>
+          {/* Occasion chips */}
+          <motion.div
+            className="mt-8"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.32 }}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[.22em] text-stone-400 mb-3">Popular right now</p>
+            <div className="flex flex-wrap gap-2">
+              {occasionChips.map(({ label, icon: Icon }) => (
+                <Link key={label} to="/search" className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 bg-white px-3.5 py-1.5 text-[13px] text-stone-700 transition-all hover:border-accent-400 hover:bg-amber-50">
+                  <Icon className="h-3.5 w-3.5 text-accent-500" /> {label}
                 </Link>
-              </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Trust signals */}
+          <motion.div
+            className="mt-12 flex flex-wrap gap-3"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            {[
+              { icon: ShieldCheck, text: "KYC-verified hosts only" },
+              { icon: MapPin,      text: "Walking distance from venue" },
+              { icon: Star,        text: "Rated by real guests" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-2 rounded-full border border-brand-800/15 bg-white px-4 py-2 text-[13px] font-medium text-brand-800">
+                <Icon className="h-4 w-4 text-accent-500" /> {text}
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Right — hero image */}
+        <div className="relative hidden lg:block">
+          <div className="absolute inset-6 overflow-hidden rounded-[24px] border border-brand-800/20">
+            <img
+              src="https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=900&q=85"
+              alt="Warm and welcoming Indian home"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-900/70 via-brand-900/10 to-transparent" />
+
+            {/* Distance chip */}
+            <div className="absolute top-6 right-6 flex items-center gap-2 rounded-full bg-white/95 backdrop-blur px-3 py-1.5 text-[12px] font-medium text-brand-800 shadow">
+              <span className="h-2 w-2 rounded-full bg-accent-500" />
+              Walking distance from venue
+            </div>
+
+            {/* Quote */}
+            <div className="absolute top-6 left-6 max-w-[200px]">
+              <p className="font-display italic text-accent-400 text-[17px] leading-tight">"Walked back home barefoot, mehendi still wet."</p>
+              <p className="mt-2 text-[11px] text-white/80">— Priya, Udaipur wedding</p>
+            </div>
+
+            {/* Floating stay card */}
+            <div className="absolute bottom-6 left-6 right-6 rounded-2xl bg-white/97 backdrop-blur p-4 shadow-xl">
+              <div className="flex items-start gap-3">
+                <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=200&q=80" className="h-16 w-16 rounded-xl object-cover" alt="" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-accent-500">Nearest stay</p>
+                  <p className="mt-0.5 text-[14px] font-semibold text-stone-900 truncate">Sunita's Haveli</p>
+                  <p className="text-[12px] text-stone-500">3 min walk to mandap</p>
+                  <div className="mt-1.5 flex items-center gap-2 text-[11px] text-stone-600">
+                    <span className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-green-700"><ShieldCheck className="h-3 w-3" /> KYC verified</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Trust badges ──────────────────────────────── */}
-      <section className="bg-white px-4 py-12 sm:px-6">
-        <motion.div
-          className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-5 sm:flex-row sm:gap-10"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-40px" }}
-        >
-          {[
-            { icon: Shield,   text: "Aadhaar KYC verified hosts" },
-            { icon: Lock,     text: "Secure payments via Razorpay" },
-            { icon: Phone,    text: "24/7 support & dispute resolution" },
-          ].map((row) => (
-            <motion.div key={row.text} variants={staggerItem} className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
-                <row.icon className="h-5 w-5 text-brand-600" aria-hidden />
+      {/* ══ OCCASION HUB PROMO ════════════════════════════════ */}
+      <section className="relative bg-brand-900 text-white px-6 py-14 overflow-hidden sm:px-10 lg:px-16">
+        <div className="absolute inset-0 motif-kolam-white opacity-40" />
+        <div className="relative mx-auto max-w-5xl grid lg:grid-cols-[1.2fr_.8fr] gap-10 items-center">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[.3em] text-accent-500">Occasion Hub</p>
+            <h2 className="mt-3 font-display text-[44px] leading-tight text-white">
+              One link. <em className="text-accent-500">All your guests</em><br />
+              find their stay.
+            </h2>
+            <p className="mt-4 max-w-md text-white/70 text-[15px] leading-relaxed">
+              Create an event hub in two minutes. Share one link on WhatsApp. Every guest sees
+              verified stays ranked by walking distance from your venue — automatically.
+            </p>
+            <div className="mt-7 flex items-center gap-4">
+              <Link to="/organizer/create" className="rounded-full bg-accent-500 text-brand-900 font-semibold px-6 py-3 text-[14px] hover:bg-accent-400 transition-colors">
+                Create your Hub →
+              </Link>
+              <Link to="/about" className="text-[14px] text-white/80 underline-offset-4 hover:underline">
+                See how it works
+              </Link>
+            </div>
+          </div>
+
+          {/* Sample hub card */}
+          <div className="rounded-2xl bg-white text-stone-900 p-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[.22em] text-stone-400">Hub · Wedding</p>
+                <p className="font-display text-[22px] text-brand-800">Sharma × Iyer</p>
               </div>
-              <span className="text-sm font-medium text-stone-700">{row.text}</span>
+              <span className="gold-seal text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Live</span>
+            </div>
+            <div className="mt-4 rounded-xl bg-cream p-3 text-[12px] text-stone-500 font-mono break-all">
+              hosttheguest.in/hub/sharma-iyer-2026
+            </div>
+            <div className="mt-4 space-y-3 text-[13px] text-stone-600">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-brand-500" />
+                All guests see verified stays ranked by distance
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-accent-500" />
+                Multiple venues linked · Guests auto-sorted
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-600" />
+                One link shared on WhatsApp — done
+              </div>
+            </div>
+            <div className="mt-4 border-t border-stone-100 pt-3 text-[11px] text-stone-400">
+              Hotel Clarks Amer · Jaipur · Example Hub
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ NEARBY STAYS ════════════════════════════════════ */}
+      {featuredListings.length > 0 && (
+        <section className="bg-cream px-6 py-16 sm:px-10 lg:px-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-end justify-between gap-6 mb-8">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-stone-400">Hand-picked</p>
+                <h2 className="mt-2 font-display text-[40px] leading-tight text-brand-900">
+                  Stays <em className="text-accent-600">within 2 km</em> of your event
+                </h2>
+              </div>
+              <Link to="/search" className="hidden sm:flex items-center gap-2 rounded-full border border-brand-700 px-5 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 transition-colors">
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <motion.div
+              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
+              variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}
+            >
+              {featuredListings.map((listing) => (
+                <motion.div key={listing._id} variants={staggerItem}>
+                  <ListingCard listing={listing} />
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* ══ HOW IT WORKS ════════════════════════════════════ */}
+      <section className="bg-white px-6 py-20 sm:px-10 lg:px-16 border-t border-stone-100">
+        <div className="mx-auto max-w-5xl">
+          <div className="max-w-xl mb-12">
+            <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-stone-400">The flow</p>
+            <h2 className="mt-2 font-display text-[40px] text-brand-900">Built for the way India celebrates.</h2>
+          </div>
+          <div className="grid gap-10 md:grid-cols-3">
+            {[
+              { n: "01", title: "Organizer opens the Hub.", body: "Add the venue, pick your dates, share one WhatsApp link. Your guests have somewhere to land before the first baraat drum." },
+              { n: "02", title: "Neighbours list their rooms.", body: "Every host Aadhaar-verified. A spare floor or a whole haveli — they set the price, keep the earnings, meet the guests." },
+              { n: "03", title: "Guests walk to the venue.", body: "Book in ninety seconds. Pay once through Razorpay. Sleep five hundred metres from the mandap, not fifty." },
+            ].map(({ n, title, body }) => (
+              <motion.article
+                key={n}
+                initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-30px" }} transition={{ duration: 0.5 }}
+                className="group"
+              >
+                <p className="font-display text-[90px] leading-[.85] text-brand-800/90 group-hover:text-accent-500 transition-colors">{n}</p>
+                <div className="goldrule mt-4 mb-5 w-16" />
+                <h3 className="font-display text-[22px] text-brand-900">{title}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-stone-600">{body}</p>
+              </motion.article>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ── CTA Banner ────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-brand-800 px-4 py-14 sm:px-6">
-        <img
-          src="https://images.pexels.com/photos/13636259/pexels-photo-13636259.jpeg?auto=compress&cs=tinysrgb&w=1400&q=80"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-25"
-        />
-        <div className="hero-blob animate-float      -top-20 -right-20 h-64 w-64 bg-brand-700/60" />
-        <div className="hero-blob animate-float-slow -bottom-16 -left-16 h-48 w-48 bg-accent-500/10" />
-        <motion.div
-          className="relative z-10 mx-auto max-w-[640px] text-center"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">
-            Hosting a wedding or gathering?
-          </h2>
-          <p className="mt-3 text-[15px] text-brand-200">
-            Create an Occasion Hub in seconds and help your guests find nearby stays — no app needed.
-          </p>
-          <Link to="/organizer" className="mt-8 inline-block">
-            <Button size="lg" variant="accent" className="btn-glow">
-              Create Occasion Hub →
-            </Button>
-          </Link>
-        </motion.div>
+      {/* ══ RECENTLY VIEWED ════════════════════════════════ */}
+      {recentlyViewed.length > 0 && (
+        <section className="bg-cream px-6 py-12 sm:px-10">
+          <div className="mx-auto max-w-5xl">
+            <motion.div className="mb-6 flex items-center gap-2" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+              <Clock className="h-5 w-5 text-brand-600" />
+              <h2 className="text-xl font-bold text-brand-900">Recently viewed</h2>
+            </motion.div>
+            <motion.div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}>
+              {recentlyViewed.map((listing) => (
+                <motion.div key={listing._id} variants={staggerItem}>
+                  <ListingCard listing={listing} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* ══ MAP EXPLORER ════════════════════════════════════ */}
+      <HomeMapSection />
+
+      {/* ══ FOR HOSTS ═══════════════════════════════════════ */}
+      <section className="relative bg-brand-800 text-white px-6 py-20 overflow-hidden sm:px-10 lg:px-16">
+        <div className="absolute inset-0 motif-kolam-white opacity-30" />
+        <div className="relative mx-auto max-w-5xl grid lg:grid-cols-2 gap-14 items-center">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[.3em] text-accent-500">For Homeowners</p>
+            <h2 className="mt-3 font-display text-[52px] leading-[1]">
+              A spare room is<br /> a <em className="text-accent-500">small dowry</em>.
+            </h2>
+            <p className="mt-5 max-w-md text-white/75 text-[15px] leading-relaxed">
+              During local weddings and poojas, hotel rates climb while families scramble.
+              Open your home. Set your price. Meet the cousin-of-a-cousin.
+            </p>
+            <ul className="mt-7 space-y-3 text-[14px] text-white/80">
+              {[
+                "Aadhaar-verified guests only — no strangers-off-the-street",
+                "Instant Razorpay payouts — T+1 to your bank",
+                "Block dates for your own family any time",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <Check className="h-5 w-5 mt-0.5 shrink-0 text-accent-500" /> {item}
+                </li>
+              ))}
+            </ul>
+            <Link to="/host/listings/new" className="mt-8 inline-block rounded-full bg-accent-500 text-brand-900 font-semibold px-7 py-3.5 text-[14px] hover:bg-accent-400 transition-colors">
+              List your space →
+            </Link>
+          </div>
+
+          <div className="relative hidden lg:block">
+            <img
+              src="https://images.pexels.com/photos/33452539/pexels-photo-33452539.jpeg?auto=compress&cs=tinysrgb&w=800&q=85"
+              className="rounded-3xl aspect-[4/5] w-full object-cover"
+              alt="Host"
+            />
+            {/* Testimonial */}
+            <div className="absolute -bottom-8 -left-8 max-w-[260px] rounded-2xl bg-white text-stone-900 p-5 shadow-2xl">
+              <p className="font-display italic text-[18px] leading-snug text-brand-900">"In one wedding week, I earned what my son sent home in six months."</p>
+              <div className="mt-3 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-stone-200 grid place-items-center text-[11px] font-semibold text-stone-600">KD</div>
+                <div>
+                  <p className="text-[12px] font-semibold">Kamla Devi</p>
+                  <p className="text-[11px] text-stone-500">Host in Jaipur · 47 stays</p>
+                </div>
+              </div>
+            </div>
+            {/* Stat badge */}
+            <div className="absolute top-6 right-6 rounded-full bg-white/95 px-4 py-2.5 shadow">
+              <p className="text-[10px] uppercase tracking-[.2em] text-stone-500">Payout</p>
+              <p className="text-[13px] font-semibold text-brand-800">Instant · T+1 to bank</p>
+            </div>
+          </div>
+        </div>
       </section>
 
-    </PageWrapper>
+    </div>
   );
 }

@@ -1,8 +1,10 @@
-import { Bath, Building2, Car, CookingPot, Flame, Home, Monitor, Wind, Wifi, WashingMachine } from "lucide-react";
+import { useState } from "react";
+import { Bath, Building2, Car, CookingPot, Flame, Heart, Home, Monitor, Wind, Wifi, WashingMachine, MapPin, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { cn } from "@utils/cn.js";
 import { formatDistanceKm, formatPricePerNight, listingDisplayTitle, listingLocationLine } from "@utils/format.js";
+import { isWishlisted, toggleWishlist } from "@utils/wishlist.js";
 
 const typeShort = { room: "Room", floor: "Floor", home: "Home", suite: "Suite", farmhouse: "Farmhouse" };
 
@@ -35,132 +37,186 @@ export function ListingCard({ listing, variant = "grid", hubName, eventId, class
     ? `/listings/${listing._id}?eventId=${encodeURIComponent(eventId)}`
     : `/listings/${listing._id}`;
 
-  const thumb = (
-    <div
-      className={cn(
-        "relative flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-brand-100 to-brand-50",
-        variant === "horizontal" ? "h-20 w-[100px] rounded-l-xl rounded-r-none" : "aspect-[16/10] w-full rounded-t-xl"
-      )}
-    >
-      {photo ? (
-        <img
-          src={photo}
-          alt={`Photo of ${title}`}
-          className="h-full w-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <Home className={cn("text-brand-400", variant === "horizontal" ? "h-8 w-8" : "h-14 w-14")} aria-hidden />
-      )}
-      {hubName && variant !== "horizontal" ? (
-        <span className="absolute bottom-2 left-2 rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-medium text-white">
-          {hubName}
-        </span>
-      ) : null}
-    </div>
-  );
+  const [liked, setLiked] = useState(() => isWishlisted(listing._id));
 
-  const meta = (
-    <>
-      <span className="inline-flex w-fit rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
-        {typePill}
-      </span>
-      <h3 className="mt-1 line-clamp-2 text-[15px] font-semibold leading-snug text-stone-900">{title}</h3>
-      <p className="mt-0.5 text-[13px] text-stone-500">
-        {locLine}
-        {dist ? (
-          <>
-            {" "}
-            · <span className="font-semibold text-stone-700">{dist}</span>
-          </>
-        ) : null}
-      </p>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {kyc ? (
-          <span className="rounded-full bg-green-50 px-2 py-0.5 text-[9px] font-medium text-green-800">KYC verified</span>
-        ) : null}
-        {listing.womenSafe ? (
-          <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[9px] font-medium text-purple-800">Women safe</span>
-        ) : null}
-        {listing.elderFriendly ? (
-          <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[9px] font-medium text-orange-800">
-            Elder friendly
-          </span>
-        ) : null}
-      </div>
-      {amenities.length > 0 ? (
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] text-stone-500">
-          {amenities.map((a) => {
-            const Icon = amenityIcon(a);
-            return (
-              <span key={a} className="flex items-center gap-1 capitalize">
-                <Icon className="h-3.5 w-3.5 shrink-0 text-stone-400" aria-hidden />
-                {a}
-              </span>
-            );
-          })}
-          {extraAm > 0 ? <span className="text-stone-400">+{extraAm} more</span> : null}
-        </div>
-      ) : null}
-    </>
-  );
+  const onToggleLike = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLiked(toggleWishlist(listing));
+  };
 
-  const foot = (
-    <div className="mt-auto flex items-center justify-between pt-3">
-      <p className="font-price text-base font-semibold text-stone-900">
-        {formatPricePerNight(listing.pricePerNight)}
-        <span className="text-xs font-normal text-stone-400">/night</span>
-      </p>
-      <p className="flex items-center gap-0.5 text-stone-600">
-        <span className="text-sm text-[#eab308]" aria-hidden>
-          ★
-        </span>
-        <span className="text-sm font-medium text-stone-900">{listing.avgRating?.toFixed(1) || "—"}</span>
-        <span className="text-xs text-stone-400">({listing.reviewCount ?? 0})</span>
-      </p>
-    </div>
-  );
-
-  if (variant === "horizontal") {
+  /* ── Grid variant ─────────────────────────────────────── */
+  if (variant === "grid") {
     return (
       <motion.div
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        whileHover={{ scale: 1.01 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
       >
         <Link
           to={detailTo}
           className={cn(
-            "listing-card flex cursor-pointer gap-0 overflow-hidden rounded-xl border border-stone-200 bg-white",
+            "group block overflow-hidden rounded-[18px] border border-stone-200 bg-white transition-all duration-250",
+            "hover:-translate-y-[3px] hover:border-brand-200 hover:shadow-[0_22px_50px_-24px_rgba(15,45,30,.28)]",
             className
           )}
         >
-          {thumb}
-          <div className="flex min-w-0 flex-1 flex-col py-3 pl-3 pr-3">
-            {meta}
-            {foot}
+          {/* Photo */}
+          <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-brand-100 to-brand-50">
+            {photo ? (
+              <img src={photo} alt={`Photo of ${title}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
+            ) : (
+              <Home className="absolute inset-0 m-auto h-14 w-14 text-brand-300" aria-hidden />
+            )}
+            {hubName && (
+              <span className="absolute bottom-2 left-2 rounded-full bg-brand-700 px-2 py-0.5 text-[10px] font-semibold text-white">
+                {hubName}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onToggleLike}
+              className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 shadow backdrop-blur-sm transition-colors hover:bg-white"
+              aria-label={liked ? "Remove from wishlist" : "Save to wishlist"}
+            >
+              <Heart className={cn("h-4 w-4 transition-colors", liked ? "fill-red-500 text-red-500" : "fill-transparent text-stone-500")} />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <span className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
+                  {typePill}
+                </span>
+                <h3 className="mt-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-stone-900">{title}</h3>
+                <p className="mt-0.5 flex items-center gap-1 text-[13px] text-stone-500">
+                  <MapPin className="h-3 w-3 shrink-0 text-stone-400" />
+                  {locLine}
+                  {dist && <><span className="text-stone-300">·</span><span className="font-medium text-brand-700">{dist}</span></>}
+                </p>
+              </div>
+            </div>
+
+            {/* Badges */}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {kyc && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                  <ShieldCheck className="h-3 w-3" /> KYC verified
+                </span>
+              )}
+              {listing.womenSafe && (
+                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700">Women safe</span>
+              )}
+              {listing.elderFriendly && (
+                <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700">Elder friendly</span>
+              )}
+            </div>
+
+            {/* Amenities */}
+            {amenities.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] text-stone-500">
+                {amenities.map((a) => {
+                  const Icon = amenityIcon(a);
+                  return (
+                    <span key={a} className="flex items-center gap-1 capitalize">
+                      <Icon className="h-3.5 w-3.5 shrink-0 text-stone-400" />
+                      {a}
+                    </span>
+                  );
+                })}
+                {extraAm > 0 && <span className="text-stone-400">+{extraAm} more</span>}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-stone-100 px-4 py-3">
+            <span className="rounded-full border border-stone-200 bg-cream px-3 py-1.5 font-mono text-[13px] font-semibold text-stone-900">
+              {formatPricePerNight(listing.pricePerNight)}
+              <span className="ml-1 font-sans text-[11px] font-normal text-stone-400">/night</span>
+            </span>
+            <p className="flex items-center gap-1 text-[13px] text-stone-600">
+              <span className="text-[#eab308]">★</span>
+              <span className="font-semibold text-stone-900">{listing.avgRating?.toFixed(1) || "—"}</span>
+              <span className="text-[12px] text-stone-400">({listing.reviewCount ?? 0})</span>
+            </p>
           </div>
         </Link>
       </motion.div>
     );
   }
 
+  /* ── Horizontal variant (search results) ─────────────── */
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      whileHover={{ y: -4, boxShadow: "0 12px 40px rgba(26,71,49,0.1)" }}
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
       <Link
         to={detailTo}
-        className={cn("listing-card block cursor-pointer overflow-hidden rounded-xl border border-stone-200 bg-white", className)}
+        className={cn(
+          "group flex overflow-hidden rounded-[18px] border border-stone-200 bg-white transition-all duration-250",
+          "hover:-translate-y-[2px] hover:border-brand-200 hover:shadow-[0_16px_40px_-20px_rgba(15,45,30,.22)]",
+          className
+        )}
       >
-        {thumb}
-        <div className="p-3">{meta}</div>
-        <div className="border-t border-stone-200 px-3 py-2">{foot}</div>
+        {/* Photo */}
+        <div className="relative h-[130px] w-[170px] shrink-0 overflow-hidden bg-gradient-to-br from-brand-100 to-brand-50">
+          {photo ? (
+            <img src={photo} alt={`Photo of ${title}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
+          ) : (
+            <Home className="absolute inset-0 m-auto h-8 w-8 text-brand-300" aria-hidden />
+          )}
+          <button
+            type="button"
+            onClick={onToggleLike}
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/85 shadow backdrop-blur-sm hover:bg-white"
+            aria-label={liked ? "Remove from wishlist" : "Save"}
+          >
+            <Heart className={cn("h-3.5 w-3.5 transition-colors", liked ? "fill-red-500 text-red-500" : "fill-transparent text-stone-500")} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex min-w-0 flex-1 flex-col p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-700">
+                {typePill}
+              </span>
+              <h3 className="mt-1 line-clamp-1 text-[14px] font-semibold text-stone-900">{title}</h3>
+              <p className="mt-0.5 flex items-center gap-1 text-[12px] text-stone-500">
+                <MapPin className="h-3 w-3 shrink-0 text-stone-400" />
+                {locLine}
+                {dist && <><span className="text-stone-300">·</span><span className="font-medium text-brand-700">{dist}</span></>}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="font-mono text-[15px] font-semibold text-brand-800">{formatPricePerNight(listing.pricePerNight)}</p>
+              <p className="text-[11px] text-stone-400">/night</p>
+            </div>
+          </div>
+
+          <div className="mt-auto flex items-center justify-between pt-2">
+            <div className="flex flex-wrap gap-1.5">
+              {kyc && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                  <ShieldCheck className="h-3 w-3" /> KYC
+                </span>
+              )}
+              {listing.womenSafe && <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700">Women safe</span>}
+              {listing.elderFriendly && <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700">Elder friendly</span>}
+            </div>
+            <p className="flex items-center gap-0.5 text-[13px]">
+              <span className="text-[#eab308]">★</span>
+              <span className="font-semibold text-stone-900">{listing.avgRating?.toFixed(1) || "—"}</span>
+              <span className="text-[11px] text-stone-400">({listing.reviewCount ?? 0})</span>
+            </p>
+          </div>
+        </div>
       </Link>
     </motion.div>
   );

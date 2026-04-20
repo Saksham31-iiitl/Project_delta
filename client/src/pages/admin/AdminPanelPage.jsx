@@ -475,6 +475,7 @@ function AllListingsTab() {
   const qc = useQueryClient();
   const [search, setSearch]         = useState("");
   const [confirmId, setConfirmId]   = useState(null);
+  const [fixingId, setFixingId]     = useState(null);
 
   const { data: listings = [], isPending } = useQuery({
     queryKey: ["admin-all-listings"],
@@ -491,6 +492,19 @@ function AllListingsTab() {
     },
     onError: (e) => toast.error(e.response?.data?.message || "Delete failed"),
   });
+
+  const fixCoords = async (id) => {
+    setFixingId(id);
+    try {
+      await adminApi.reGeocodeListing(id);
+      toast.success("Coordinates fixed!");
+      qc.invalidateQueries({ queryKey: ["admin-all-listings"] });
+    } catch {
+      toast.error("Could not geocode — check address fields");
+    } finally {
+      setFixingId(null);
+    }
+  };
 
   const q = search.trim().toLowerCase();
   const visible = listings.filter((l) => {
@@ -559,10 +573,20 @@ function AllListingsTab() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${STATUS_BADGE[l.status] || "bg-stone-100 text-stone-500"}`}>
                 {l.status?.replace("_", " ")}
               </span>
+
+              <button
+                type="button"
+                disabled={fixingId === l._id}
+                onClick={() => fixCoords(l._id)}
+                className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {fixingId === l._id ? "Fixing…" : "Fix coords"}
+              </button>
 
               {confirmId === l._id ? (
                 <div className="flex items-center gap-1.5">

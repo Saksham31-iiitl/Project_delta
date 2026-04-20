@@ -133,14 +133,18 @@ async function deleteListing(req, res) {
 }
 
 async function reGeocodeAll(req, res) {
-  const DELHI_LNG = 77.2090;
-  const DELHI_LAT = 28.6139;
-  const EPSILON   = 0.05;
+  const EPSILON = 0.05;
+  const DEFAULT_CENTERS = [
+    { lat: 28.6139, lng: 77.2090 }, // Delhi fallback
+    { lat: 20.5937, lng: 78.9629 }, // India map center default
+  ];
 
-  // Find listings stored at (or near) the Delhi default — these have bad coords
+  // Build $or query to catch any known-bad default coordinates
   const badListings = await Listing.find({
-    "location.coordinates.0": { $gt: DELHI_LNG - EPSILON, $lt: DELHI_LNG + EPSILON },
-    "location.coordinates.1": { $gt: DELHI_LAT - EPSILON, $lt: DELHI_LAT + EPSILON },
+    $or: DEFAULT_CENTERS.map(({ lat, lng }) => ({
+      "location.coordinates.0": { $gt: lng - EPSILON, $lt: lng + EPSILON },
+      "location.coordinates.1": { $gt: lat - EPSILON, $lt: lat + EPSILON },
+    })),
   }).lean();
 
   let fixed = 0;
