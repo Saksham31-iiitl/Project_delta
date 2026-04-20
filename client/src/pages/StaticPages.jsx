@@ -164,7 +164,7 @@ export function BlogPage() {
         <p className="text-2xl font-bold">We're writing ✍️</p>
         <p className="mt-2 text-brand-200">Our first posts are on their way. Subscribe to get them first.</p>
         <a
-          href="mailto:hostttheguest@gmail.com?subject=Subscribe to HostTheGuest blog"
+          href="mailto:ritikamis8081@gmail.com?subject=Subscribe to HostTheGuest blog"
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-500 px-5 py-2.5 text-sm font-semibold text-brand-900 transition-opacity hover:opacity-90"
         >
           <Mail className="h-4 w-4" /> Notify me when posts go live
@@ -228,7 +228,7 @@ export function CareersPage() {
           but that changes. Drop us your resume and we'll reach out when something fits.
         </p>
         <a
-          href="mailto:hostttheguest@gmail.com?subject=Career enquiry — HostTheGuest"
+          href="mailto:ritikamis8081@gmail.com?subject=Career enquiry — HostTheGuest"
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
         >
           <Mail className="h-4 w-4" /> Send us your resume anyway
@@ -310,10 +310,10 @@ export function PressPage() {
           For interviews, data requests, or media kit — reach out directly.
         </p>
         <a
-          href="mailto:hostttheguest@gmail.com?subject=Press enquiry"
+          href="mailto:ritikamis8081@gmail.com?subject=Press enquiry"
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
         >
-          <Mail className="h-4 w-4" /> hostttheguest@gmail.com
+          <Mail className="h-4 w-4" /> ritikamis8081@gmail.com
         </a>
       </Card>
     </PageWrapper>
@@ -385,8 +385,8 @@ export function HelpPage() {
         <p className="text-sm font-medium text-brand-800">Can't find your answer?</p>
         <p className="mt-1 text-xs text-stone-500">
           Reach us at{" "}
-          <a href="mailto:hostttheguest@gmail.com" className="font-semibold text-brand-600 hover:underline">
-            hostttheguest@gmail.com
+          <a href="mailto:ritikamis8081@gmail.com" className="font-semibold text-brand-600 hover:underline">
+            ritikamis8081@gmail.com
           </a>{" "}
           or call{" "}
           <a href="tel:+918081742805" className="font-semibold text-brand-600 hover:underline">
@@ -415,9 +415,9 @@ export function ContactPage() {
     {
       icon: Mail,
       label: "Email us",
-      value: "hostttheguest@gmail.com",
+      value: "ritikamis8081@gmail.com",
       sub: "We reply within 24 hours",
-      href: "mailto:hostttheguest@gmail.com",
+      href: "mailto:ritikamis8081@gmail.com",
       bg: "bg-brand-50",
       iconCls: "text-brand-600",
     },
@@ -558,7 +558,7 @@ export function SafetyPage() {
           <a href="tel:+918081742805" className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/25">
             <Phone className="h-4 w-4" /> +91 80817 42805
           </a>
-          <a href="mailto:hostttheguest@gmail.com" className="inline-flex items-center gap-2 rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-brand-900 hover:opacity-90">
+          <a href="mailto:ritikamis8081@gmail.com" className="inline-flex items-center gap-2 rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-brand-900 hover:opacity-90">
             <Mail className="h-4 w-4" /> Email support
           </a>
         </div>
@@ -633,7 +633,7 @@ export function TrustPage() {
           and reviewed within 2 hours during business hours.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <a href="mailto:hostttheguest@gmail.com?subject=Safety report" className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
+          <a href="mailto:ritikamis8081@gmail.com?subject=Safety report" className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">
             <Mail className="h-4 w-4" /> Report via email
           </a>
           <a href="tel:+918081742805" className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-50">

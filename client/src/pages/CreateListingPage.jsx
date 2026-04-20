@@ -27,8 +27,9 @@ import {
   Zap,
 } from "lucide-react";
 import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from "@react-google-maps/api";
-import { ImagePlus, X as XIcon } from "lucide-react";
+import { ImagePlus, Sparkles, X as XIcon } from "lucide-react";
 import * as listingsApi from "@api/listings.api.js";
+import { aiGenerate, buildListingDescriptionPrompt } from "@utils/ai.js";
 import { Button } from "@components/common/Button.jsx";
 import { Input } from "@components/common/Input.jsx";
 import { PageWrapper } from "@components/layout/PageWrapper.jsx";
@@ -306,6 +307,32 @@ export default function CreateListingPage() {
   const removePhoto = (idx) =>
     setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
 
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const handleGenerateDescription = async () => {
+    setAiGenerating(true);
+    try {
+      const v = {
+        type:             watch("type"),
+        city:             watch("city"),
+        state:            watch("state"),
+        maxGuests:        watch("maxGuests"),
+        beds:             watch("beds"),
+        bathrooms:        watch("bathrooms"),
+        amenities:        selectedAmenities,
+        nearbyVenueArea:  watch("nearbyVenueArea"),
+      };
+      const prompt = buildListingDescriptionPrompt(v);
+      const text   = await aiGenerate(prompt);
+      setValue("description", text.trim());
+      toast.success("Description generated!");
+    } catch {
+      toast.error("AI generation failed — check your Groq API key");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   // Amenity checkboxes (managed separately as they're an array)
   const [selectedAmenities, setSelectedAmenities] = useState(["wifi", "geyser"]);
   const toggleAmenity = (key) =>
@@ -418,12 +445,21 @@ export default function CreateListingPage() {
               error={errors.title?.message}
             />
             <div>
-              <label className="mb-1 block text-sm font-medium text-stone-700">
-                Description
-              </label>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="text-sm font-medium text-stone-700">Description</label>
+                <button
+                  type="button"
+                  onClick={handleGenerateDescription}
+                  disabled={aiGenerating}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {aiGenerating ? "Generating…" : "Generate with AI ✨"}
+                </button>
+              </div>
               <textarea
                 rows={3}
-                placeholder="Describe your space — size, feel, what makes it special for event guests…"
+                placeholder="Describe your space — or click 'Generate with AI' to write it for you!"
                 className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm placeholder:text-stone-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
                 {...register("description")}
               />
