@@ -1,34 +1,36 @@
 import { Circle, GoogleMap, Marker } from "@react-google-maps/api";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { formatCompactInr } from "@utils/format.js";
 
 const defaultCenter = { lat: 26.9124, lng: 75.7873 };
 
-export function MapView({ center, listings = [], venue, radiusKm = 2, isLoaded, selectedId, onListingClick }) {
+const mapOptions = {
+  disableDefaultUI: true,
+  zoomControl: true,
+  clickableIcons: false,
+  styles: [
+    { featureType: "poi",     stylers: [{ visibility: "off" }] },
+    { featureType: "transit", stylers: [{ visibility: "off" }] },
+  ],
+};
+
+export function MapView({
+  center,
+  listings = [],
+  venue,
+  radiusKm = 2,
+  isLoaded,
+  selectedId,
+  onListingClick,
+  onMapLoad,   // ← parent can receive the map instance directly
+}) {
   const mapCenter = center?.lat && center?.lng ? center : defaultCenter;
   const mapRef = useRef(null);
 
-  const onLoad = useCallback((map) => { mapRef.current = map; }, []);
-
-  // Pan the map whenever center prop changes
-  useEffect(() => {
-    if (mapRef.current && mapCenter.lat && mapCenter.lng) {
-      mapRef.current.panTo(mapCenter);
-    }
-  }, [mapCenter.lat, mapCenter.lng]);
-
-  const options = useMemo(
-    () => ({
-      disableDefaultUI: true,
-      zoomControl: true,
-      clickableIcons: false,
-      styles: [
-        { featureType: "poi",     stylers: [{ visibility: "off" }] },
-        { featureType: "transit", stylers: [{ visibility: "off" }] },
-      ],
-    }),
-    []
-  );
+  const onLoad = useCallback((map) => {
+    mapRef.current = map;
+    onMapLoad?.(map);           // expose instance to parent immediately
+  }, [onMapLoad]);
 
   if (!isLoaded) {
     return (
@@ -43,7 +45,7 @@ export function MapView({ center, listings = [], venue, radiusKm = 2, isLoaded, 
       mapContainerClassName="h-full w-full rounded-xl"
       center={mapCenter}
       zoom={13}
-      options={options}
+      options={mapOptions}
       onLoad={onLoad}
     >
       {/* Venue marker + radius circle */}

@@ -96,19 +96,28 @@ function SearchContent({ isLoaded, mapsEnabled }) {
   const sortId   = params.get("sort") || "distance";
 
   const [manualInput, setManualInput] = useState(areaLabel);
-  const [mobileView, setMobileView]   = useState("list"); // "list" | "map"
-  const [selected, setSelected]       = useState(null);   // clicked listing from map pin
-  const cardRefs = useRef({});
-  const acRef    = useRef(null);
+  const [mobileView, setMobileView]   = useState("list");
+  const [selected, setSelected]       = useState(null);
+  const cardRefs  = useRef({});
+  const acRef     = useRef(null);
+  const mapRef    = useRef(null); // direct handle to the Google Map instance
+  const inputRef  = useRef(null);
 
   useEffect(() => { setManualInput(areaLabel); }, [areaLabel]);
 
-  const setCenter = useCallback((nextLat, nextLng, nextArea) => {
+  // Move map + update URL params
+  const goToLocation = useCallback((newLat, newLng, label) => {
+    // Pan the map immediately — no waiting for re-render cycle
+    if (mapRef.current) {
+      mapRef.current.panTo({ lat: newLat, lng: newLng });
+      mapRef.current.setZoom(13);
+    }
     const p = new URLSearchParams(params);
-    p.set("lat", String(nextLat));
-    p.set("lng", String(nextLng));
-    if (nextArea) p.set("area", nextArea);
+    p.set("lat", String(newLat));
+    p.set("lng", String(newLng));
+    if (label) p.set("area", label); else p.delete("area");
     setParams(p, { replace: true });
+    setSelected(null);
   }, [params, setParams]);
 
   const qParams = useMemo(
@@ -123,6 +132,7 @@ function SearchContent({ isLoaded, mapsEnabled }) {
 
   const sortedListings = useMemo(() => sortListings(listings, sortId), [listings, sortId]);
 
+  // Called when user picks from autocomplete dropdown
   const onPlaceChanged = () => {
     const place = acRef.current?.getPlace?.();
     const loc   = place?.geometry?.location;
@@ -130,11 +140,28 @@ function SearchContent({ isLoaded, mapsEnabled }) {
     const label = place.formatted_address
       || [place.name, place.vicinity].filter(Boolean).join(", ")
       || "";
-    setCenter(loc.lat(), loc.lng(), label);
+    goToLocation(loc.lat(), loc.lng(), label);
+  };
+
+  // Geocode whatever text is in the input (for Enter / Search button)
+  const geocodeInput = () => {
+    const text = inputRef.current?.value?.trim() || manualInput.trim();
+    if (!text || typeof window.google === "undefined") return;
+    new window.google.maps.Geocoder().geocode(
+      { address: text + ", India" },
+      (results, status) => {
+        if (status === "OK" && results[0]) {
+          const loc   = results[0].geometry.location;
+          const label = results[0].formatted_address || text;
+          goToLocation(loc.lat(), loc.lng(), label);
+        }
+      }
+    );
   };
 
   const onManualSubmit = (e) => {
     e.preventDefault();
+    if (mapsEnabled && isLoaded) { geocodeInput(); return; }
     const p = new URLSearchParams(params);
     const label = manualInput.trim();
     if (label) p.set("area", label); else p.delete("area");
@@ -177,17 +204,32 @@ function SearchContent({ isLoaded, mapsEnabled }) {
         <Search className="mt-2.5 h-4 w-4 shrink-0 text-stone-400" />
         <div className="min-w-0 flex-1">
           {mapsEnabled && isLoaded ? (
-            <Autocomplete onLoad={(ac) => (acRef.current = ac)} onPlaceChanged={onPlaceChanged}>
-              <input
-                className="w-full border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
-                placeholder="Search venue or area"
-                defaultValue={areaLabel}
-                key={areaLabel || "empty"}
-              />
-            </Autocomplete>
+            <div className="flex items-center gap-2">
+              <Autocomplete
+                onLoad={(ac) => (acRef.current = ac)}
+                onPlaceChanged={onPlaceChanged}
+                className="min-w-0 flex-1"
+              >
+                <input
+                  ref={inputRef}
+                  className="w-full border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                  placeholder="Search city, area or venue…"
+                  defaultValue={areaLabel}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); geocodeInput(); } }}
+                />
+              </Autocomplete>
+              <button
+                type="button"
+                onClick={geocodeInput}
+                className="shrink-0 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
+              >
+                Go
+              </button>
+            </div>
           ) : (
             <form onSubmit={onManualSubmit} className="flex gap-2">
               <input
+                ref={inputRef}
                 className="min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
                 placeholder="Enter area or landmark name"
                 value={manualInput}
@@ -266,6 +308,7 @@ function SearchContent({ isLoaded, mapsEnabled }) {
           isLoaded={isLoaded}
           selectedId={selected?._id}
           onListingClick={handlePinClick}
+          onMapLoad={(map) => { mapRef.current = map; }}
         />
       ) : (
         <div className="flex h-full items-center justify-center rounded-xl bg-stone-100 text-sm text-stone-400">
