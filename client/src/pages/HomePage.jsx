@@ -144,7 +144,7 @@ function MapExplorerInner({ isLoaded }) {
   };
 
   return (
-    <div className="relative h-[480px] w-full rounded-3xl border border-stone-200 shadow-xl sm:h-[540px]">
+    <div className="relative h-[420px] w-full rounded-2xl sm:rounded-3xl border border-stone-200 shadow-xl sm:h-[540px]">
       <div className="absolute inset-0 overflow-hidden rounded-3xl">
         <MapView center={center} listings={listings} radiusKm={5} isLoaded={isLoaded} selectedId={selected?._id} onListingClick={setSelected} />
       </div>
@@ -202,19 +202,19 @@ function HomeMapSection() {
   }
 
   return (
-    <section className="bg-cream px-4 py-14 sm:px-6">
+    <section className="bg-cream px-4 py-12 sm:px-6 lg:py-14">
       <div className="mx-auto max-w-5xl">
-        <motion.div className="mb-8 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+        <motion.div className="mb-7 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
           <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-stone-400 mb-2">Live map</p>
-          <h2 className="font-display text-[40px] leading-tight text-brand-900">Explore stays <em className="text-accent-600">near any event</em></h2>
+          <h2 className="font-display text-[30px] sm:text-[40px] leading-tight text-brand-900">Explore stays <em className="text-accent-600">near any event</em></h2>
           <p className="mt-2 text-sm text-stone-500">Search any city or venue — see verified stays as pins on the map</p>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
           <MapExplorerInner isLoaded={isLoaded} />
         </motion.div>
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs text-stone-400">
-          {["🔍  Search any area or venue", "📍  Click a pin to preview", "🏠  Tap 'Explore all' for full search"].map((h) => (
-            <span key={h} className="rounded-full border border-stone-100 bg-white px-3 py-1.5">{h}</span>
+        <div className="mt-4 chip-scroll flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:justify-center text-xs text-stone-400">
+          {["🔍  Search any area or venue", "📍  Tap a pin to preview", "🏠  Tap 'Explore all' for full search"].map((h) => (
+            <span key={h} className="shrink-0 rounded-full border border-stone-100 bg-white px-3 py-1.5">{h}</span>
           ))}
         </div>
       </div>
@@ -250,10 +250,10 @@ export default function HomePage() {
       <section className="relative grid overflow-hidden lg:grid-cols-[1.1fr_.9fr] lg:min-h-[90vh]">
 
         {/* Left — text */}
-        <div className="relative motif-kolam px-6 pb-16 pt-14 sm:px-10 lg:pl-16 lg:pr-14 lg:py-24 flex flex-col justify-center">
+        <div className="relative motif-kolam px-5 pb-12 pt-10 sm:px-10 lg:pl-16 lg:pr-14 lg:py-24 flex flex-col justify-center">
           {/* Eyebrow */}
           <motion.div
-            className="inline-flex w-fit items-center gap-2.5 rounded-full border border-brand-800/15 bg-white px-3.5 py-1.5 text-[12px] font-medium text-brand-800"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-800/15 bg-white px-3 py-1.5 text-[11px] sm:text-[12px] font-medium text-brand-800"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           >
             <span className="relative inline-flex h-2 w-2">
@@ -265,7 +265,7 @@ export default function HomePage() {
 
           {/* Headline */}
           <motion.h1
-            className="font-display mt-7 text-[52px] leading-[.95] text-brand-900 sm:text-[64px] lg:text-[72px]"
+            className="font-display mt-5 text-[42px] leading-[.95] text-brand-900 sm:text-[56px] lg:text-[72px]"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08 }}
           >
             Stay close <br /> to the{" "}
@@ -273,30 +273,30 @@ export default function HomePage() {
           </motion.h1>
 
           <motion.p
-            className="mt-6 max-w-md text-base leading-relaxed text-stone-600"
+            className="mt-4 max-w-md text-[14px] sm:text-base leading-relaxed text-stone-600"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.16 }}
           >
-            Verified rooms, floors &amp; homes within walking distance of any wedding, pooja, or family gathering —
-            hosted by real neighbours, not hotel chains.
+            Verified rooms &amp; homes within walking distance of any wedding, pooja, or family gathering —
+            hosted by real neighbours.
           </motion.p>
 
           {/* Search bar */}
           <motion.form
             onSubmit={onHeroSearch}
-            className="mt-10 flex overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_24px_60px_-30px_rgba(15,45,30,.25)]"
+            className="mt-7 flex overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_16px_48px_-20px_rgba(15,45,30,.22)]"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.24 }}
           >
-            <label className="search-field flex-1 px-5 py-4">
+            <label className="search-field flex-1 px-4 py-3.5 sm:px-5 sm:py-4">
               <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-stone-400">Occasion / Venue</p>
               <input
-                className="mt-1 w-full bg-transparent text-[14px] font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                className="mt-1 w-full bg-transparent text-[13px] sm:text-[14px] font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
                 placeholder="Sharma wedding, Jaipur"
                 value={heroQuery}
                 onChange={(e) => setHeroQuery(e.target.value)}
               />
             </label>
-            <button type="submit" className="flex items-center justify-center gap-2 bg-brand-800 px-7 text-[14px] font-semibold text-white hover:bg-brand-900 transition-colors">
-              <Search className="h-4 w-4" /> Find my stay
+            <button type="submit" className="flex items-center justify-center gap-1.5 bg-brand-800 px-5 sm:px-7 text-[13px] sm:text-[14px] font-semibold text-white hover:bg-brand-900 transition-colors">
+              <Search className="h-4 w-4" /> <span className="hidden sm:inline">Find my stay</span><span className="sm:hidden">Search</span>
             </button>
           </motion.form>
 
@@ -306,9 +306,9 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.32 }}
           >
             <p className="text-[11px] font-semibold uppercase tracking-[.22em] text-stone-400 mb-3">Popular right now</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="chip-scroll flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
               {occasionChips.map(({ label, icon: Icon }) => (
-                <Link key={label} to="/search" className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 bg-white px-3.5 py-1.5 text-[13px] text-stone-700 transition-all hover:border-accent-400 hover:bg-amber-50">
+                <Link key={label} to="/search" className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-stone-300 bg-white px-3.5 py-1.5 text-[13px] text-stone-700 transition-all hover:border-accent-400 hover:bg-amber-50">
                   <Icon className="h-3.5 w-3.5 text-accent-500" /> {label}
                 </Link>
               ))}
@@ -317,15 +317,15 @@ export default function HomePage() {
 
           {/* Trust signals */}
           <motion.div
-            className="mt-12 flex flex-wrap gap-3"
+            className="mt-10 chip-scroll flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
           >
             {[
-              { icon: ShieldCheck, text: "KYC-verified hosts only" },
-              { icon: MapPin,      text: "Walking distance from venue" },
-              { icon: Star,        text: "Rated by real guests" },
+              { icon: ShieldCheck, text: "KYC-verified hosts" },
+              { icon: MapPin,      text: "Walking distance" },
+              { icon: Star,        text: "Real guest ratings" },
             ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2 rounded-full border border-brand-800/15 bg-white px-4 py-2 text-[13px] font-medium text-brand-800">
+              <div key={text} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-brand-800/15 bg-white px-4 py-2 text-[13px] font-medium text-brand-800">
                 <Icon className="h-4 w-4 text-accent-500" /> {text}
               </div>
             ))}
@@ -373,21 +373,21 @@ export default function HomePage() {
       </section>
 
       {/* ══ OCCASION HUB PROMO ════════════════════════════════ */}
-      <section className="relative bg-brand-900 text-white px-6 py-14 overflow-hidden sm:px-10 lg:px-16">
+      <section className="relative bg-brand-900 text-white px-5 py-12 overflow-hidden sm:px-10 lg:px-16 lg:py-16">
         <div className="absolute inset-0 motif-kolam-white opacity-40" />
-        <div className="relative mx-auto max-w-5xl grid lg:grid-cols-[1.2fr_.8fr] gap-10 items-center">
+        <div className="relative mx-auto max-w-5xl grid lg:grid-cols-[1.2fr_.8fr] gap-8 lg:gap-10 items-center">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[.3em] text-accent-500">Occasion Hub</p>
-            <h2 className="mt-3 font-display text-[44px] leading-tight text-white">
+            <h2 className="mt-3 font-display text-[34px] leading-tight text-white sm:text-[40px] lg:text-[44px]">
               One link. <em className="text-accent-500">All your guests</em><br />
               find their stay.
             </h2>
-            <p className="mt-4 max-w-md text-white/70 text-[15px] leading-relaxed">
+            <p className="mt-4 max-w-md text-white/70 text-[14px] sm:text-[15px] leading-relaxed">
               Create an event hub in two minutes. Share one link on WhatsApp. Every guest sees
               verified stays ranked by walking distance from your venue — automatically.
             </p>
-            <div className="mt-7 flex items-center gap-4">
-              <Link to="/organizer/create" className="rounded-full bg-accent-500 text-brand-900 font-semibold px-6 py-3 text-[14px] hover:bg-accent-400 transition-colors">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link to="/organizer/create" className="rounded-full bg-accent-500 text-brand-900 font-semibold px-6 py-3 text-[14px] hover:bg-accent-400 transition-colors active:scale-95">
                 Create your Hub →
               </Link>
               <Link to="/about" className="text-[14px] text-white/80 underline-offset-4 hover:underline">
@@ -431,41 +431,39 @@ export default function HomePage() {
 
       {/* ══ NEARBY STAYS ════════════════════════════════════ */}
       {featuredListings.length > 0 && (
-        <section className="bg-cream px-6 py-16 sm:px-10 lg:px-16">
+        <section className="bg-cream py-14 sm:px-10 lg:px-16 lg:py-16">
           <div className="mx-auto max-w-6xl">
-            <div className="flex items-end justify-between gap-6 mb-8">
+            <div className="flex items-end justify-between gap-6 mb-6 px-5 sm:px-0">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-stone-400">Hand-picked</p>
-                <h2 className="mt-2 font-display text-[40px] leading-tight text-brand-900">
-                  Stays <em className="text-accent-600">within 2 km</em> of your event
+                <h2 className="mt-2 font-display text-[32px] leading-tight text-brand-900 sm:text-[40px]">
+                  Stays <em className="text-accent-600">near your event</em>
                 </h2>
               </div>
-              <Link to="/search" className="hidden sm:flex items-center gap-2 rounded-full border border-brand-700 px-5 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 transition-colors">
+              <Link to="/search" className="shrink-0 flex items-center gap-2 rounded-full border border-brand-700 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 transition-colors">
                 View all <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <motion.div
-              className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
-              variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}
-            >
+            {/* Mobile: horizontal scroll. Desktop: grid */}
+            <div className="flex gap-5 overflow-x-auto pb-4 px-5 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 [-webkit-overflow-scrolling:touch]">
               {featuredListings.map((listing) => (
-                <motion.div key={listing._id} variants={staggerItem}>
+                <div key={listing._id} className="w-[78vw] shrink-0 sm:w-auto">
                   <ListingCard listing={listing} />
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
       )}
 
       {/* ══ HOW IT WORKS ════════════════════════════════════ */}
-      <section className="bg-white px-6 py-20 sm:px-10 lg:px-16 border-t border-stone-100">
+      <section className="bg-white px-5 py-14 sm:px-10 lg:px-16 lg:py-20 border-t border-stone-100">
         <div className="mx-auto max-w-5xl">
-          <div className="max-w-xl mb-12">
+          <div className="max-w-xl mb-10 lg:mb-12">
             <p className="text-[11px] font-semibold uppercase tracking-[.28em] text-stone-400">The flow</p>
-            <h2 className="mt-2 font-display text-[40px] text-brand-900">Built for the way India celebrates.</h2>
+            <h2 className="mt-2 font-display text-[32px] sm:text-[40px] text-brand-900">Built for the way India celebrates.</h2>
           </div>
-          <div className="grid gap-10 md:grid-cols-3">
+          <div className="grid gap-8 sm:gap-10 md:grid-cols-3">
             {[
               { n: "01", title: "Organizer opens the Hub.", body: "Add the venue, pick your dates, share one WhatsApp link. Your guests have somewhere to land before the first baraat drum." },
               { n: "02", title: "Neighbours list their rooms.", body: "Every host Aadhaar-verified. A spare floor or a whole haveli — they set the price, keep the earnings, meet the guests." },
@@ -474,12 +472,14 @@ export default function HomePage() {
               <motion.article
                 key={n}
                 initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-30px" }} transition={{ duration: 0.5 }}
-                className="group"
+                className="group flex gap-5 md:block"
               >
-                <p className="font-display text-[90px] leading-[.85] text-brand-800/90 group-hover:text-accent-500 transition-colors">{n}</p>
-                <div className="goldrule mt-4 mb-5 w-16" />
-                <h3 className="font-display text-[22px] text-brand-900">{title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-stone-600">{body}</p>
+                <p className="font-display text-[64px] sm:text-[90px] leading-[.85] text-brand-800/90 group-hover:text-accent-500 transition-colors shrink-0 md:shrink">{n}</p>
+                <div className="flex-1 md:block">
+                  <div className="goldrule mt-1 mb-4 w-12 md:mt-4 md:mb-5 md:w-16" />
+                  <h3 className="font-display text-[20px] sm:text-[22px] text-brand-900">{title}</h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-stone-600">{body}</p>
+                </div>
               </motion.article>
             ))}
           </div>
@@ -488,19 +488,19 @@ export default function HomePage() {
 
       {/* ══ RECENTLY VIEWED ════════════════════════════════ */}
       {recentlyViewed.length > 0 && (
-        <section className="bg-cream px-6 py-12 sm:px-10">
+        <section className="bg-cream py-12 sm:px-10">
           <div className="mx-auto max-w-5xl">
-            <motion.div className="mb-6 flex items-center gap-2" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
+            <motion.div className="mb-6 flex items-center gap-2 px-5 sm:px-0" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}>
               <Clock className="h-5 w-5 text-brand-600" />
               <h2 className="text-xl font-bold text-brand-900">Recently viewed</h2>
             </motion.div>
-            <motion.div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}>
+            <div className="flex gap-4 overflow-x-auto pb-4 px-5 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 [-webkit-overflow-scrolling:touch]">
               {recentlyViewed.map((listing) => (
-                <motion.div key={listing._id} variants={staggerItem}>
+                <div key={listing._id} className="w-[78vw] shrink-0 sm:w-auto">
                   <ListingCard listing={listing} />
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
       )}
@@ -509,19 +509,19 @@ export default function HomePage() {
       <HomeMapSection />
 
       {/* ══ FOR HOSTS ═══════════════════════════════════════ */}
-      <section className="relative bg-brand-800 text-white px-6 py-20 overflow-hidden sm:px-10 lg:px-16">
+      <section className="relative bg-brand-800 text-white px-5 py-14 overflow-hidden sm:px-10 lg:px-16 lg:py-20">
         <div className="absolute inset-0 motif-kolam-white opacity-30" />
-        <div className="relative mx-auto max-w-5xl grid lg:grid-cols-2 gap-14 items-center">
+        <div className="relative mx-auto max-w-5xl grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[.3em] text-accent-500">For Homeowners</p>
-            <h2 className="mt-3 font-display text-[52px] leading-[1]">
+            <h2 className="mt-3 font-display text-[38px] leading-[1] sm:text-[48px] lg:text-[52px]">
               A spare room is<br /> a <em className="text-accent-500">small dowry</em>.
             </h2>
-            <p className="mt-5 max-w-md text-white/75 text-[15px] leading-relaxed">
+            <p className="mt-5 max-w-md text-white/75 text-[14px] sm:text-[15px] leading-relaxed">
               During local weddings and poojas, hotel rates climb while families scramble.
               Open your home. Set your price. Meet the cousin-of-a-cousin.
             </p>
-            <ul className="mt-7 space-y-3 text-[14px] text-white/80">
+            <ul className="mt-6 space-y-3 text-[14px] text-white/80">
               {[
                 "Aadhaar-verified guests only — no strangers-off-the-street",
                 "Instant Razorpay payouts — T+1 to your bank",
@@ -532,9 +532,21 @@ export default function HomePage() {
                 </li>
               ))}
             </ul>
-            <Link to="/host/listings/new" className="mt-8 inline-block rounded-full bg-accent-500 text-brand-900 font-semibold px-7 py-3.5 text-[14px] hover:bg-accent-400 transition-colors">
+            <Link to="/host/listings/new" className="mt-8 inline-block rounded-full bg-accent-500 text-brand-900 font-semibold px-7 py-3.5 text-[14px] hover:bg-accent-400 transition-colors active:scale-95">
               List your space →
             </Link>
+
+            {/* Mobile testimonial */}
+            <div className="mt-8 rounded-2xl bg-white/10 backdrop-blur border border-white/15 p-4 lg:hidden">
+              <p className="font-display italic text-[17px] leading-snug text-white">"In one wedding week, I earned what my son sent home in six months."</p>
+              <div className="mt-3 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-white/20 grid place-items-center text-[11px] font-semibold text-white">KD</div>
+                <div>
+                  <p className="text-[12px] font-semibold text-white">Kamla Devi</p>
+                  <p className="text-[11px] text-white/60">Host in Jaipur · 47 stays</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="relative hidden lg:block">

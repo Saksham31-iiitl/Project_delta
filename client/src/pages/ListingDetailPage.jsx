@@ -153,7 +153,7 @@ export default function ListingDetailPage() {
 
   return (
     <div className="bg-cream">
-      <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-16">
+      <div className="mx-auto max-w-6xl px-4 pb-32 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-16">
 
         {/* Breadcrumbs */}
         <p className="mb-4 text-[12px] text-stone-500">
@@ -176,7 +176,7 @@ export default function ListingDetailPage() {
                 </span>
               )}
             </div>
-            <h1 className="font-display text-[36px] leading-[1.05] text-brand-900 sm:text-[44px]">
+            <h1 className="font-display text-[28px] leading-[1.05] text-brand-900 sm:text-[36px] lg:text-[44px]">
               {title}
               {listing.type && (
                 <em className="text-accent-600"> — {typePill.toLowerCase()} floor</em>
@@ -249,9 +249,9 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Mobile scroll */}
-            <div className="flex gap-2 overflow-x-auto pb-2 chip-scroll lg:hidden">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 [-webkit-overflow-scrolling:touch] lg:hidden">
               {photos.map((src, i) => (
-                <button key={src} type="button" className="relative w-[85%] shrink-0 overflow-hidden rounded-2xl" onClick={() => setGalleryOpen(true)}>
+                <button key={src} type="button" className="relative w-[88vw] shrink-0 overflow-hidden rounded-2xl sm:w-[70vw]" onClick={() => setGalleryOpen(true)}>
                   <img src={src} alt="" className="aspect-[16/10] w-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
                 </button>
               ))}
@@ -289,7 +289,7 @@ export default function ListingDetailPage() {
         )}
 
         {/* Content grid */}
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_400px]">
+        <div className="mt-6 grid gap-8 lg:mt-10 lg:grid-cols-[1fr_400px]">
           <div>
 
             {/* Host row */}
