@@ -21,3 +21,12 @@ export const rejectKyc = (userId) =>
 
 export const adminAnalytics = () =>
   mockOr(() => api.get("/admin/analytics"), () => ({ listings: 12, bookings: 48, revenue: 125000 }));
+
+export const getAllUsers = () =>
+  mockOr(() => api.get("/admin/users"), () => []);
+
+export const searchUser = (email) =>
+  mockOr(() => api.get("/admin/users/search", { params: { email } }), () => null);
+
+export const setUserRoles = (id, roles) =>
+  mockOr(() => api.put(`/admin/users/${id}/roles`, { roles }), () => ({ _id: id, roles }));

@@ -6,16 +6,14 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
-  Clock,
   Home,
   LayoutDashboard,
   LogOut,
+  Mail,
   Phone,
   Plus,
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
   Star,
+  User,
   X,
 } from "lucide-react";
 import * as usersApi from "@api/users.api.js";
@@ -34,28 +32,9 @@ function initials(user) {
       .toUpperCase()
       .slice(0, 2);
   }
-  const p = user?.phone?.replace(/\D/g, "") || "";
-  return p.slice(-2) || "?";
-}
-
-function KycBadge({ status }) {
-  if (status === "verified")
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-        <ShieldCheck className="h-3.5 w-3.5" /> KYC Verified
-      </span>
-    );
-  if (status === "pending")
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-        <Clock className="h-3.5 w-3.5" /> KYC Pending
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
-      <ShieldAlert className="h-3.5 w-3.5" /> KYC Not Verified
-    </span>
-  );
+  if (user?.email) return user.email[0].toUpperCase();
+  if (user?.phone) return user.phone.replace(/\D/g, "").slice(-2) || null;
+  return null;
 }
 
 function RolePill({ role }) {
@@ -141,21 +120,6 @@ function QuickLink({ icon: Icon, label, desc, to, accent = false }) {
   );
 }
 
-/* ── Trust score bar ─────────────────────────────────── */
-function TrustBar({ score }) {
-  const pct = Math.min(100, Math.max(0, (score / 100) * 100));
-  const color = pct >= 70 ? "bg-green-500" : pct >= 40 ? "bg-amber-400" : "bg-red-400";
-  return (
-    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
-      <motion.div
-        className={`h-full rounded-full ${color}`}
-        initial={{ width: 0 }}
-        animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-      />
-    </div>
-  );
-}
 
 /* ── Component ───────────────────────────────────────── */
 export default function ProfilePage() {
@@ -193,7 +157,7 @@ export default function ProfilePage() {
         onCancel={() => setShowLogout(false)}
       />
 
-      {isPending && !cached?.phone ? (
+      {isPending && !cached ? (
         <div className="flex justify-center py-20">
           <Spinner />
         </div>
@@ -215,57 +179,33 @@ export default function ProfilePage() {
               {/* Avatar — overlaps the strip */}
               <div className="-mt-10 mb-3 flex items-end justify-between">
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-brand-700 text-2xl font-bold text-white shadow-md">
-                  {initials(user)}
+                  {initials(user) ?? <User className="h-8 w-8 text-white/80" />}
                 </div>
                 <div className="flex gap-2">
                   {roles.map((r) => <RolePill key={r} role={r} />)}
                 </div>
               </div>
 
-              {/* Name + phone */}
-              {user?.fullName && (
+              {/* Name */}
+              {user?.fullName ? (
                 <h1 className="text-xl font-bold text-stone-900">{user.fullName}</h1>
-              )}
-              <div className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
-                <Phone className="h-3.5 w-3.5" />
-                {user?.phone || "—"}
-              </div>
-
-              {/* KYC badge */}
-              <div className="mt-3">
-                <KycBadge status={user?.kycStatus} />
-              </div>
-
-              {/* KYC nudge banner */}
-              {user?.kycStatus !== "verified" && (
-                <motion.div
-                  className="mt-4 flex items-start gap-3 rounded-xl bg-amber-50 px-4 py-3"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Shield className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                  <div>
-                    <p className="text-xs font-semibold text-amber-800">Complete your KYC</p>
-                    <p className="mt-0.5 text-xs text-amber-700">
-                      Aadhaar verification unlocks bookings and hosting.
-                    </p>
-                  </div>
-                </motion.div>
+              ) : (
+                <p className="text-sm text-stone-400 italic">No name set</p>
               )}
 
-              {/* Trust score */}
-              {user?.trustScore != null && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-xs text-stone-500">
-                    <span className="flex items-center gap-1">
-                      <Star className="h-3 w-3 text-accent-500" /> Trust score
-                    </span>
-                    <span className="font-semibold text-stone-700">{user.trustScore} / 100</span>
+              {/* Email + phone */}
+              <div className="mt-2 space-y-1">
+                {user?.email && (
+                  <div className="flex items-center gap-1.5 text-sm text-stone-500">
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    {user.email}
                   </div>
-                  <TrustBar score={user.trustScore} />
+                )}
+                <div className="flex items-center gap-1.5 text-sm text-stone-500">
+                  <Phone className="h-3.5 w-3.5 shrink-0" />
+                  {user?.phone || <span className="italic text-stone-400">No phone added</span>}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 

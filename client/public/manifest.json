@@ -1,6 +1,6 @@
 ﻿{
-  "name": "NearbyStay",
-  "short_name": "NearbyStay",
+  "name": "HostTheGuest",
+  "short_name": "HostTheGuest",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fafaf9",

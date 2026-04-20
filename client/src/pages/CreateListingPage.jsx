@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "motion/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +12,8 @@ import {
   Building2,
   Car,
   ChefHat,
+  ChevronDown,
+  ChevronUp,
   Home,
   Hotel,
   MapPin,
@@ -24,10 +26,13 @@ import {
   Wind,
   Zap,
 } from "lucide-react";
+import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from "@react-google-maps/api";
 import * as listingsApi from "@api/listings.api.js";
 import { Button } from "@components/common/Button.jsx";
 import { Input } from "@components/common/Input.jsx";
 import { PageWrapper } from "@components/layout/PageWrapper.jsx";
+
+const GMAPS_LIBS = ["places"];
 
 /* ─── Schema ─────────────────────────────────────────────── */
 const schema = z.object({
@@ -79,6 +84,77 @@ const TYPES = [
   { value: "farmhouse", label: "Farmhouse",  desc: "Open grounds & scenic space",   icon: Trees },
 ];
 
+/* ─── Optional map location picker ───────────────────────── */
+const MAP_OPTIONS = {
+  disableDefaultUI: true,
+  zoomControl: true,
+  clickableIcons: false,
+};
+
+function LocationPickerMap({ lat, lng, onPick, onAddressFill }) {
+  const acRef  = useRef(null);
+  const mapRef = useRef(null);
+  const center = { lat: lat || 28.6139, lng: lng || 77.2090 };
+
+  const onPlaceChanged = () => {
+    const place = acRef.current?.getPlace?.();
+    const loc   = place?.geometry?.location;
+    if (!loc) return;
+    onPick(loc.lat(), loc.lng());
+    mapRef.current?.panTo({ lat: loc.lat(), lng: loc.lng() });
+
+    // Try to fill address fields from place components
+    const comps = place.address_components || [];
+    const get = (type) => comps.find((c) => c.types.includes(type))?.long_name || "";
+    onAddressFill({
+      street:   [get("street_number"), get("route")].filter(Boolean).join(" "),
+      locality: get("sublocality_level_1") || get("locality") || get("administrative_area_level_3"),
+      city:     get("locality") || get("administrative_area_level_2"),
+      state:    get("administrative_area_level_1"),
+      pincode:  get("postal_code"),
+    });
+  };
+
+  return (
+    <div className="relative mt-3 h-64 rounded-xl border border-stone-200 sm:h-72">
+      {/* Search bar over map */}
+      <div className="absolute left-2 right-2 top-2 z-10">
+        <Autocomplete onLoad={(ac) => (acRef.current = ac)} onPlaceChanged={onPlaceChanged}>
+          <input
+            placeholder="Search your address to drop pin…"
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm shadow-md placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          />
+        </Autocomplete>
+      </div>
+
+      {/* Map */}
+      <div className="absolute inset-0 overflow-hidden rounded-xl">
+        <GoogleMap
+          mapContainerClassName="h-full w-full"
+          center={center}
+          zoom={15}
+          options={MAP_OPTIONS}
+          onLoad={(m) => (mapRef.current = m)}
+          onClick={(e) => onPick(e.latLng.lat(), e.latLng.lng())}
+        >
+          <Marker
+            position={center}
+            draggable
+            onDragEnd={(e) => onPick(e.latLng.lat(), e.latLng.lng())}
+          />
+        </GoogleMap>
+      </div>
+
+      {/* Hint */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+        <span className="rounded-full bg-black/50 px-3 py-1 text-[10px] text-white backdrop-blur-sm">
+          Click on map or drag pin to your exact location
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Section wrapper ─────────────────────────────────────── */
 function Section({ title, children }) {
   return (
@@ -98,6 +174,15 @@ function Section({ title, children }) {
 export default function CreateListingPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { isLoaded: mapsLoaded } = useJsApiLoader({
+    id: "nearbystay-map",
+    googleMapsApiKey: mapsKey || "",
+    libraries: GMAPS_LIBS,
+  });
+
+  const [showMap, setShowMap] = useState(false);
 
   const {
     register,
@@ -317,6 +402,56 @@ export default function CreateListingPage() {
               />
               <p className="mt-1 text-[11px] text-stone-400">Helps event guests find you easily</p>
             </div>
+
+            {/* ── Optional map pin ── */}
+            {mapsKey && mapsLoaded && (
+              <div className="rounded-xl border border-dashed border-brand-300 bg-brand-50/50 p-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMap((v) => !v)}
+                  className="flex w-full items-center justify-between text-sm font-medium text-brand-700"
+                >
+                  <span className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-brand-500" />
+                    Pin your exact location on map
+                    <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
+                      Optional
+                    </span>
+                  </span>
+                  {showMap
+                    ? <ChevronUp className="h-4 w-4 text-stone-400" />
+                    : <ChevronDown className="h-4 w-4 text-stone-400" />
+                  }
+                </button>
+                <p className="mt-1 text-[11px] text-stone-400">
+                  Helps guests see your stay on the map — more bookings!
+                </p>
+
+                {showMap && (
+                  <LocationPickerMap
+                    lat={watch("lat")}
+                    lng={watch("lng")}
+                    onPick={(lat, lng) => {
+                      setValue("lat", lat);
+                      setValue("lng", lng);
+                    }}
+                    onAddressFill={(fields) => {
+                      if (fields.street)   setValue("street",   fields.street);
+                      if (fields.locality) setValue("locality", fields.locality);
+                      if (fields.city)     setValue("city",     fields.city);
+                      if (fields.state)    setValue("state",    fields.state);
+                      if (fields.pincode)  setValue("pincode",  fields.pincode);
+                    }}
+                  />
+                )}
+
+                {watch("lat") && watch("lng") && (
+                  <p className="mt-2 text-[11px] text-brand-600">
+                    ✓ Pin set — {Number(watch("lat")).toFixed(5)}, {Number(watch("lng")).toFixed(5)}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </Section>
 

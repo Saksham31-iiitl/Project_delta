@@ -1,5 +1,8 @@
 import { motion, useInView, useMotionValue, useSpring } from "motion/react";
 import {
+  ArrowRight,
+  Bath,
+  Bed,
   Building2,
   Cake,
   Check,
@@ -17,11 +20,17 @@ import {
   Star,
   Trees,
   Users,
+  X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+import { MapView } from "@components/search/MapView.jsx";
 import { Button } from "@components/common/Button.jsx";
 import { PageWrapper } from "@components/layout/PageWrapper.jsx";
+import * as listingsApi from "@api/listings.api.js";
+import { formatPricePerNight, listingDisplayTitle, listingLocationLine } from "@utils/format.js";
 
 /* ─── helpers ─────────────────────────────────────────── */
 
@@ -143,6 +152,275 @@ const staggerItem = {
   hidden: { opacity: 0, y: 22 },
   show:   { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
+
+/* ─── Map explorer constants ───────────────────────────── */
+const DEFAULT_CENTER = { lat: 28.6139, lng: 77.2090 }; // New Delhi
+const GMAPS_LIBS = ["places"];
+
+/* ─── Mini popup on pin click ──────────────────────────── */
+function HomeMapPopup({ listing, onClose }) {
+  if (!listing) return null;
+  const title   = listingDisplayTitle(listing);
+  const locLine = listingLocationLine(listing);
+  return (
+    <motion.div
+      key={listing._id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.2 }}
+      className="absolute bottom-4 left-1/2 z-20 w-[min(92%,340px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-stone-500 shadow hover:bg-stone-100"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      {listing.photos?.[0] && (
+        <img src={listing.photos[0]} alt={title} className="h-28 w-full object-cover" />
+      )}
+      <div className="p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-600">{listing.type}</p>
+        <p className="mt-0.5 truncate text-sm font-bold text-stone-900">{title}</p>
+        {locLine && <p className="mt-0.5 truncate text-xs text-stone-500">{locLine}</p>}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-3 text-xs text-stone-400">
+            {listing.beds      && <span className="flex items-center gap-1"><Bed  className="h-3 w-3" />{listing.beds}</span>}
+            {listing.bathrooms && <span className="flex items-center gap-1"><Bath className="h-3 w-3" />{listing.bathrooms}</span>}
+          </div>
+          <p className="text-sm font-bold text-brand-700">{formatPricePerNight(listing.pricePerNight)}</p>
+        </div>
+        <Link
+          to={`/listings/${listing._id}`}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 py-2 text-xs font-semibold text-white hover:bg-brand-700"
+        >
+          View listing <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Map section inner (needs Maps loaded) ────────────── */
+function MapExplorerInner({ isLoaded }) {
+  const acRef    = useRef(null);
+  const inputRef = useRef(null);
+  const navigate = useNavigate();
+  const [center, setCenter]       = useState(DEFAULT_CENTER);
+  const [areaLabel, setAreaLabel] = useState("New Delhi");
+  const [selected, setSelected]   = useState(null);
+
+  const qParams = useMemo(() => ({ lat: center.lat, lng: center.lng, radiusKm: 5 }), [center]);
+
+  const { data: listings = [] } = useQuery({
+    queryKey: ["home-map-listings", qParams],
+    queryFn: () => listingsApi.searchListings(qParams).then((r) => r.data),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const applyLocation = (lat, lng, label) => {
+    setCenter({ lat, lng });
+    setAreaLabel(label);
+    setSelected(null);
+  };
+
+  const onPlaceChanged = () => {
+    const place = acRef.current?.getPlace?.();
+    const loc   = place?.geometry?.location;
+    if (!loc) return;
+    const label = place.formatted_address
+      || [place.name, place.vicinity].filter(Boolean).join(", ")
+      || "";
+    applyLocation(loc.lat(), loc.lng(), label);
+  };
+
+  // Geocode whatever is in the input when user presses Enter or clicks Search
+  const geocodeInput = () => {
+    const text = inputRef.current?.value?.trim();
+    if (!text) return;
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address: text }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        const loc   = results[0].geometry.location;
+        const label = results[0].formatted_address || text;
+        applyLocation(loc.lat(), loc.lng(), label);
+      }
+    });
+  };
+
+  const goToSearch = () => {
+    const p = new URLSearchParams();
+    p.set("lat", String(center.lat));
+    p.set("lng", String(center.lng));
+    p.set("area", areaLabel);
+    navigate(`/search?${p.toString()}`);
+  };
+
+  return (
+    <div className="relative h-[480px] w-full rounded-3xl border border-stone-200 shadow-xl sm:h-[540px]">
+
+      {/* ── Map (clipped to rounded corners) ── */}
+      <div className="absolute inset-0 overflow-hidden rounded-3xl">
+        <MapView
+          center={center}
+          listings={listings}
+          radiusKm={5}
+          isLoaded={isLoaded}
+          selectedId={selected?._id}
+          onListingClick={setSelected}
+        />
+        {/* Bottom gradient */}
+        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center bg-gradient-to-t from-brand-900/60 to-transparent px-4 pb-5 pt-16 pointer-events-none" />
+      </div>
+
+      {/* ── Floating search bar (outside overflow clip) ── */}
+      <div className="absolute left-1/2 top-4 z-20 w-[min(92%,500px)] -translate-x-1/2">
+        <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm">
+          <Search className="h-4 w-4 shrink-0 text-stone-400" />
+          {isLoaded ? (
+            <Autocomplete
+              onLoad={(ac) => (acRef.current = ac)}
+              onPlaceChanged={onPlaceChanged}
+            >
+              <input
+                ref={inputRef}
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                placeholder="Search any area, venue or city…"
+                defaultValue={areaLabel}
+                key={areaLabel}
+                style={{ width: "100%" }}
+                onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }}
+              />
+            </Autocomplete>
+          ) : (
+            <input
+              ref={inputRef}
+              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-stone-500 focus:outline-none"
+              placeholder="Enter area or city…"
+              defaultValue={areaLabel}
+              onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }}
+            />
+          )}
+          <button
+            type="button"
+            onClick={geocodeInput}
+            className="shrink-0 rounded-xl bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 active:scale-95 transition-transform"
+          >
+            Search
+          </button>
+        </div>
+      </div>
+
+      {/* ── Listing count badge ── */}
+      {listings.length > 0 && (
+        <div className="absolute bottom-16 left-4 z-20">
+          <div className="rounded-full border border-brand-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-brand-700 shadow backdrop-blur-sm">
+            {listings.length} stay{listings.length !== 1 ? "s" : ""} nearby
+          </div>
+        </div>
+      )}
+
+      {/* ── Pin popup ── */}
+      <HomeMapPopup listing={selected} onClose={() => setSelected(null)} />
+
+      {/* ── Bottom CTA (outside overflow clip) ── */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-center px-4 pb-5">
+        <button
+          type="button"
+          onClick={goToSearch}
+          className="flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-brand-800 shadow-xl hover:bg-brand-50 transition-colors"
+        >
+          <MapPin className="h-4 w-4 text-brand-600" />
+          Explore all stays on map
+          <ArrowRight className="h-4 w-4 text-brand-600" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Map section wrapper (handles API key check) ──────── */
+function HomeMapSection() {
+  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: "nearbystay-map",
+    googleMapsApiKey: key || "",
+    libraries: GMAPS_LIBS,
+  });
+
+  // Fallback if no key
+  if (!key || loadError) {
+    return (
+      <section className="bg-white px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold text-brand-900">Explore stays near any event</h2>
+            <p className="mt-2 text-sm text-stone-500">Find verified rooms within walking distance of your venue</p>
+          </div>
+          <Link to="/search">
+            <div className="group relative flex h-64 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-brand-800 to-brand-600 shadow-xl sm:h-80">
+              <div className="absolute inset-0 opacity-20"
+                style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px), radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+              />
+              <div className="relative z-10 text-center">
+                <MapPin className="mx-auto mb-3 h-12 w-12 text-accent-400" />
+                <p className="text-xl font-bold text-white">Browse all stays →</p>
+                <p className="mt-1 text-sm text-brand-200">Filter by area, type & price</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="bg-white px-4 py-14 sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <motion.div
+          className="mb-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+        >
+          <span className="mb-3 inline-block rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-600">
+            Live map
+          </span>
+          <h2 className="text-2xl font-bold text-brand-900">Explore stays near any event</h2>
+          <p className="mt-2 text-sm text-stone-500">
+            Search any city or venue — see verified stays as pins on the map
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <MapExplorerInner isLoaded={isLoaded} />
+        </motion.div>
+
+        {/* How-to hints */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-stone-400">
+          {[
+            "🔍  Search any area or venue",
+            "📍  Click a pin to see listing details",
+            "🏠  Tap 'Explore all' for full search",
+          ].map((hint) => (
+            <span key={hint} className="rounded-full border border-stone-100 bg-stone-50 px-3 py-1.5">
+              {hint}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* ─── Component ────────────────────────────────────────── */
 export default function HomePage() {
@@ -279,8 +557,8 @@ export default function HomePage() {
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           >
             <img
-              src="https://images.pexels.com/photos/32293298/pexels-photo-32293298.jpeg?auto=compress&cs=tinysrgb&w=900&q=85"
-              alt="Traditional Indian wedding ceremony with flower petals"
+              src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85"
+              alt="Comfortable modern room available for guests"
               className="h-full w-full object-cover"
             />
             {/* Gradient fade on left edge to blend into cream bg */}
@@ -426,6 +704,9 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── Map Explorer ──────────────────────────────── */}
+      <HomeMapSection />
 
       {/* ── How it works ──────────────────────────────── */}
       <section className="bg-white px-4 py-14 sm:px-6">

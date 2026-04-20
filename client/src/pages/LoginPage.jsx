@@ -6,8 +6,9 @@ import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Home, Mail, Shield, ShieldCheck, Star, Users } from "lucide-react";
+import { Home, Mail, Phone, Shield, ShieldCheck, Star, User, Users } from "lucide-react";
 import * as authApi from "@api/auth.api.js";
+import * as usersApi from "@api/users.api.js";
 import { Button } from "@components/common/Button.jsx";
 import { useAuthStore } from "@stores/authStore.js";
 import { sanitizeAuthUser } from "@utils/authUser.js";
@@ -98,14 +99,18 @@ function ResendTimer({ onResend }) {
 
 /* ─── Component ─────────────────────────────────────────── */
 export default function LoginPage() {
-  const [step, setStep]     = useState("email");
-  const [email, setEmail]   = useState("");
-  const [otp, setOtp]       = useState("");
-  const [loading, setLoading] = useState(false);
+  const [step, setStep]         = useState("email");
+  const [email, setEmail]       = useState("");
+  const [otp, setOtp]           = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [profileName, setProfileName]   = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [pendingUser, setPendingUser]   = useState(null);
   const navigate  = useNavigate();
   const [params]  = useSearchParams();
   const redirect  = params.get("redirect") || "/";
   const setAuth   = useAuthStore((s) => s.setAuth);
+  const mergeUser = useAuthStore((s) => s.mergeUser);
   const qc        = useQueryClient();
 
   const isHostFlow = redirect.includes("/host") || redirect.includes("/organizer");
@@ -142,20 +147,53 @@ export default function LoginPage() {
       setAuth(data.token, user);
       qc.invalidateQueries({ queryKey: ["me"] });
 
-      const name = user?.fullName?.split(" ")[0];
-      toast.success(name ? `Welcome, ${name}! 👋` : "Welcome!");
-
-      const hasExplicit = params.get("redirect");
-      if (!hasExplicit) {
-        const roles = user?.roles || [];
-        if (roles.includes("host"))      return navigate("/host",      { replace: true });
-        if (roles.includes("organizer")) return navigate("/organizer", { replace: true });
-        return navigate("/", { replace: true });
+      // New user or missing profile — collect name + phone first
+      if (!user?.fullName || !user?.phone) {
+        setPendingUser(user);
+        setProfileName(user?.fullName || "");
+        setProfilePhone(user?.phone || "");
+        setStep("profile");
+        return;
       }
-      navigate(redirect, { replace: true });
+
+      const name = user?.fullName?.split(" ")[0];
+      toast.success(name ? `Welcome back, ${name}!` : "Welcome back!");
+      doRedirect(user);
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid OTP — please try again");
       setOtp("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const doRedirect = (user) => {
+    const hasExplicit = params.get("redirect");
+    if (!hasExplicit) {
+      const roles = user?.roles || [];
+      if (roles.includes("admin"))     return navigate("/admin",     { replace: true });
+      if (roles.includes("host"))      return navigate("/host",      { replace: true });
+      if (roles.includes("organizer")) return navigate("/organizer", { replace: true });
+      return navigate("/", { replace: true });
+    }
+    navigate(redirect, { replace: true });
+  };
+
+  const saveProfile = async () => {
+    if (!profileName.trim()) { toast.error("Please enter your name"); return; }
+    setLoading(true);
+    try {
+      const { data } = await usersApi.updateMe({
+        fullName: profileName.trim(),
+        phone: profilePhone.trim() || undefined,
+      });
+      const updated = sanitizeAuthUser(data);
+      mergeUser(updated);
+      qc.invalidateQueries({ queryKey: ["me"] });
+      toast.success(`Welcome, ${profileName.trim().split(" ")[0]}!`);
+      doRedirect(updated ?? pendingUser);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not save profile");
     } finally {
       setLoading(false);
     }
@@ -184,7 +222,7 @@ export default function LoginPage() {
         sub: "List your spare room and earn from nearby events",
         points: [
           { icon: Star,       text: "You set your own price" },
-          { icon: ShieldCheck, text: "Guests are Aadhaar verified" },
+          { icon: ShieldCheck, text: "Guests are verified" },
           { icon: Users,      text: "You approve every booking" },
         ],
         img: "https://images.pexels.com/photos/16314538/pexels-photo-16314538.jpeg?auto=compress&cs=tinysrgb&w=800&q=85",
@@ -195,7 +233,7 @@ export default function LoginPage() {
         title: "Find stays near your event",
         sub: "Verified rooms within walking distance of any celebration",
         points: [
-          { icon: ShieldCheck, text: "KYC verified hosts only" },
+          { icon: ShieldCheck, text: "Verified hosts only" },
           { icon: Shield,      text: "Secure Razorpay payments" },
           { icon: Star,        text: "Real reviews from guests" },
         ],
@@ -251,7 +289,9 @@ export default function LoginPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            {step === "email" ? (
+
+            {/* ── Step 1: Email ── */}
+            {step === "email" && (
               <motion.div
                 key="email-step"
                 initial={{ opacity: 0, x: 20 }}
@@ -293,7 +333,6 @@ export default function LoginPage() {
                   </Button>
                 </form>
 
-                {/* Trust row */}
                 <div className="mt-8 flex items-center justify-center gap-4 border-t border-stone-100 pt-6">
                   {ctx.points.map((p) => (
                     <div key={p.text} className="flex flex-col items-center gap-1 text-center">
@@ -303,7 +342,10 @@ export default function LoginPage() {
                   ))}
                 </div>
               </motion.div>
-            ) : (
+            )}
+
+            {/* ── Step 2: OTP ── */}
+            {step === "otp" && (
               <motion.div
                 key="otp-step"
                 initial={{ opacity: 0, x: 20 }}
@@ -345,6 +387,92 @@ export default function LoginPage() {
                 </p>
               </motion.div>
             )}
+
+            {/* ── Step 3: Complete profile ── */}
+            {step === "profile" && (
+              <motion.div
+                key="profile-step"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.25 }}
+              >
+                {/* Avatar placeholder */}
+                <div className="mb-5 flex justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100">
+                    <User className="h-8 w-8 text-brand-600" />
+                  </div>
+                </div>
+
+                <h1 className="text-center text-2xl font-bold text-stone-900">
+                  Almost there!
+                </h1>
+                <p className="mt-1 text-center text-sm text-stone-500">
+                  Tell us a bit about yourself so hosts and guests can recognise you.
+                </p>
+
+                <div className="mt-8 space-y-4">
+                  {/* Full name */}
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-stone-700">
+                      Full name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex overflow-hidden rounded-xl border-2 border-stone-200 transition-all focus-within:border-brand-400">
+                      <span className="flex items-center border-r border-stone-200 bg-stone-50 px-3 text-stone-400">
+                        <User className="h-4 w-4" />
+                      </span>
+                      <input
+                        type="text"
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        placeholder="e.g. Ravi Sharma"
+                        autoFocus
+                        className="min-w-0 flex-1 bg-white px-3 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mobile number */}
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-stone-700">
+                      Mobile number{" "}
+                      <span className="text-xs font-normal text-stone-400">(optional)</span>
+                    </label>
+                    <div className="flex overflow-hidden rounded-xl border-2 border-stone-200 transition-all focus-within:border-brand-400">
+                      <span className="flex items-center border-r border-stone-200 bg-stone-50 px-3 text-stone-400">
+                        <Phone className="h-4 w-4" />
+                      </span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
+                        placeholder="+91 98765 43210"
+                        className="min-w-0 flex-1 bg-white px-3 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="w-full"
+                    disabled={loading || !profileName.trim()}
+                    onClick={saveProfile}
+                  >
+                    {loading ? "Saving…" : "Save & Continue →"}
+                  </Button>
+
+                  <button
+                    type="button"
+                    className="w-full text-center text-xs text-stone-400 hover:text-stone-600"
+                    onClick={() => doRedirect(pendingUser)}
+                  >
+                    Skip for now
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </div>
       </div>
