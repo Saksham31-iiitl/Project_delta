@@ -27,6 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useJsApiLoader, Autocomplete, GoogleMap, Marker } from "@react-google-maps/api";
+import { ImagePlus, X as XIcon } from "lucide-react";
 import * as listingsApi from "@api/listings.api.js";
 import { Button } from "@components/common/Button.jsx";
 import { Input } from "@components/common/Input.jsx";
@@ -271,6 +272,40 @@ export default function CreateListingPage() {
     },
   });
 
+  // Photo upload state
+  const [photoFiles, setPhotoFiles]   = useState([]); // { file, preview, url? }
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  const handlePhotoAdd = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const previews = files.map((file) => ({ file, preview: URL.createObjectURL(file), url: null }));
+    setPhotoFiles((prev) => [...prev, ...previews]);
+    setPhotoUploading(true);
+    try {
+      const res = await listingsApi.uploadListingPhotos(files);
+      const urls = res.data.urls;
+      setPhotoFiles((prev) => {
+        const updated = [...prev];
+        let urlIdx = 0;
+        for (let i = 0; i < updated.length; i++) {
+          if (!updated[i].url && urlIdx < urls.length) {
+            updated[i] = { ...updated[i], url: urls[urlIdx++] };
+          }
+        }
+        return updated;
+      });
+    } catch {
+      toast.error("Photo upload failed — check Cloudinary config");
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removePhoto = (idx) =>
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
+
   // Amenity checkboxes (managed separately as they're an array)
   const [selectedAmenities, setSelectedAmenities] = useState(["wifi", "geyser"]);
   const toggleAmenity = (key) =>
@@ -342,6 +377,7 @@ export default function CreateListingPage() {
       bathrooms: v.bathrooms,
       pricePerNight: v.pricePerNight,
       amenities: selectedAmenities,
+      photos: photoFiles.map((p) => p.url).filter(Boolean),
       rules: rules || undefined,
       checkInTime: v.checkinTime,
       checkOutTime: v.checkoutTime,
@@ -683,6 +719,54 @@ export default function CreateListingPage() {
               />
             </div>
           </div>
+        </Section>
+
+        {/* ── 9. Photos ── */}
+        <Section title="Photos of your space">
+          <p className="mb-3 text-xs text-stone-500">Upload up to 10 photos. First photo will be the cover image.</p>
+          {/* Preview grid */}
+          {photoFiles.length > 0 && (
+            <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {photoFiles.map((p, i) => (
+                <div key={i} className="relative aspect-square overflow-hidden rounded-xl border border-stone-200 bg-stone-100">
+                  <img src={p.preview} alt="" className="h-full w-full object-cover" />
+                  {!p.url && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-stone-900/70 text-white hover:bg-red-600"
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-1 left-1 rounded-full bg-brand-600 px-1.5 py-0.5 text-[9px] font-bold text-white">Cover</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Upload button */}
+          {photoFiles.length < 10 && (
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-300 py-8 text-stone-500 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-600">
+              <ImagePlus className="h-8 w-8" />
+              <span className="text-sm font-medium">
+                {photoUploading ? "Uploading…" : "Click to add photos"}
+              </span>
+              <span className="text-xs text-stone-400">JPG, PNG, WEBP · Max 5 MB each</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                onChange={handlePhotoAdd}
+                disabled={photoUploading}
+              />
+            </label>
+          )}
         </Section>
 
         {/* ── Submit ── */}

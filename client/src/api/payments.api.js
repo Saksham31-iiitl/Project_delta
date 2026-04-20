@@ -6,3 +6,6 @@ export const verifyPaymentOnly = (body) =>
 
 export const hostPayouts = () =>
   mockOr(() => api.get("/payments/host-payouts"), () => [{ id: "p1", amount: 4500, status: "processed" }]);
+
+export const confirmUpiPayment = (body) =>
+  mockOr(() => api.post("/payments/upi-confirm", body), () => ({ ok: true }));

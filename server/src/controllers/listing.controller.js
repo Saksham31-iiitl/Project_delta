@@ -1,6 +1,7 @@
 const Listing = require("../models/Listing");
 const { searchListings } = require("../services/search.service");
 const { geocodeAddress } = require("../utils/geocode");
+const cloudinary = require("../config/cloudinary");
 
 const DELHI_LAT = 28.6139;
 const DELHI_LNG = 77.2090;
@@ -63,6 +64,22 @@ async function updateListingStatus(req, res) {
   res.json(listing);
 }
 
+async function uploadListingPhotos(req, res) {
+  if (!req.files?.length) return res.status(400).json({ message: "No files uploaded" });
+  const urls = await Promise.all(
+    req.files.map((file) =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "listings", resource_type: "image", allowed_formats: ["jpg", "jpeg", "png", "webp"] },
+          (error, result) => (error ? reject(error) : resolve(result.secure_url))
+        );
+        stream.end(file.buffer);
+      })
+    )
+  );
+  res.json({ urls });
+}
+
 module.exports = {
   createListing,
   getListing,
@@ -70,4 +87,5 @@ module.exports = {
   myListings,
   listingSearch,
   updateListingStatus,
+  uploadListingPhotos,
 };

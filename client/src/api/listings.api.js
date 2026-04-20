@@ -18,3 +18,9 @@ export const updateListing = (id, body) =>
 
 export const updateListingStatus = (id, status) =>
   mockOr(() => api.put(`/listings/${id}/status`, { status }), () => ({ ...fixtures.mockListingById(id), status }));
+
+export const uploadListingPhotos = (files) => {
+  const fd = new FormData();
+  files.forEach((f) => fd.append("photos", f));
+  return api.post("/listings/upload-photos", fd, { headers: { "Content-Type": "multipart/form-data" } });
+};

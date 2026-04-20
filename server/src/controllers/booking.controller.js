@@ -11,7 +11,8 @@ async function createBooking(req, res) {
   const totalAmount = listing.pricePerNight * nights;
   const platformFee = calculatePlatformFee(totalAmount, listing.type);
   const hostPayout = totalAmount - platformFee;
-  const order = await createOrder({ amount: totalAmount, receipt: `book_${Date.now()}` });
+  const isUpi = req.body.paymentMethod === "upi";
+  const order = isUpi ? null : await createOrder({ amount: totalAmount, receipt: `book_${Date.now()}` });
   const booking = await Booking.create({
     listingId: listing._id,
     guestId: req.user.sub,
@@ -23,7 +24,7 @@ async function createBooking(req, res) {
     totalAmount,
     platformFee,
     hostPayout,
-    paymentOrderId: order.id,
+    paymentOrderId: isUpi ? "upi_pending" : order.id,
     hostResponseDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
   res.status(201).json({ booking, order });

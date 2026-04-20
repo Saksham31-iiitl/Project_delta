@@ -121,6 +121,17 @@ async function reGeocodeListing(req, res) {
   res.json({ ok: true, lat: coords.lat, lng: coords.lng });
 }
 
+async function getAllListings(req, res) {
+  const listings = await Listing.find({}).sort({ createdAt: -1 }).limit(200).lean();
+  res.json(listings);
+}
+
+async function deleteListing(req, res) {
+  const listing = await Listing.findByIdAndDelete(req.params.id);
+  if (!listing) return res.status(404).json({ message: "Listing not found" });
+  res.json({ ok: true });
+}
+
 async function reGeocodeAll(req, res) {
   const DELHI_LNG = 77.2090;
   const DELHI_LAT = 28.6139;
@@ -154,4 +165,5 @@ module.exports = {
   pendingKyc, approveKyc, rejectKyc,
   analytics, getAllUsers, searchUser, setUserRoles,
   reGeocodeListing, reGeocodeAll,
+  getAllListings, deleteListing,
 };

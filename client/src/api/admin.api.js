@@ -33,3 +33,9 @@ export const setUserRoles = (id, roles) =>
 
 export const reGeocodeListing = (id) => api.post(`/admin/listings/${id}/geocode`);
 export const reGeocodeAll     = ()   => api.post("/admin/listings/geocode-all");
+
+export const getAllListings = () =>
+  mockOr(() => api.get("/admin/listings/all"), () => []);
+
+export const deleteListing = (id) =>
+  mockOr(() => api.delete(`/admin/listings/${id}`), () => ({ ok: true }));

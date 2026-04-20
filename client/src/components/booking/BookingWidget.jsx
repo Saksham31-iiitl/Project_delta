@@ -7,10 +7,14 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import * as bookingsApi from "@api/bookings.api.js";
+import * as paymentsApi from "@api/payments.api.js";
 import { Button } from "@components/common/Button.jsx";
 import { useRazorpay } from "@hooks/useRazorpay.js";
 import { formatInr } from "@utils/format.js";
 import "react-day-picker/style.css";
+
+const UPI_ID   = import.meta.env.VITE_UPI_ID   || "";
+const UPI_NAME = import.meta.env.VITE_UPI_NAME || "HostTheGuest";
 
 const schema = z.object({
   guestsCount: z.coerce.number().int().min(1).max(50),
@@ -22,7 +26,12 @@ export function BookingWidget({ listing, eventId }) {
   const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
   const maxGuests = Math.min(20, Math.max(1, listing.maxGuests || 8));
 
-  const [range, setRange] = useState();
+  const [range, setRange]           = useState();
+  const [payMethod, setPayMethod]   = useState("razorpay"); // "razorpay" | "upi"
+  const [upiPhase, setUpiPhase]     = useState("idle");     // "idle" | "awaiting" | "done"
+  const [upiBookingId, setUpiBookingId] = useState(null);
+  const [upiTotal, setUpiTotal]     = useState(0);
+  const [utr, setUtr]               = useState("");
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -55,6 +64,16 @@ export function BookingWidget({ listing, eventId }) {
     onError: (e) => toast.error(e.response?.data?.message || "Verification failed"),
   });
 
+  const upiConfirmMut = useMutation({
+    mutationFn: (body) => paymentsApi.confirmUpiPayment(body).then((r) => r.data),
+    onSuccess: () => {
+      toast.success("UTR submitted — booking pending host confirmation");
+      qc.invalidateQueries({ queryKey: ["my-bookings"] });
+      setUpiPhase("done");
+    },
+    onError: (e) => toast.error(e.response?.data?.message || "Could not submit UTR"),
+  });
+
   const scrollToWidget = () => {
     document.getElementById("booking-widget")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -73,7 +92,15 @@ export function BookingWidget({ listing, eventId }) {
         checkOut,
         guestsCount: values.guestsCount,
         eventId: eventId || undefined,
+        paymentMethod: payMethod,
       });
+
+      if (payMethod === "upi") {
+        setUpiBookingId(booking._id);
+        setUpiTotal(booking.totalAmount + (booking.platformFee || 0));
+        setUpiPhase("awaiting");
+        return;
+      }
 
       const amount = order.amount;
       const currency = order.currency || "INR";
@@ -202,9 +229,80 @@ export function BookingWidget({ listing, eventId }) {
             </div>
           </div>
 
-          <Button type="submit" className="h-12 w-full text-base" disabled={createMut.isPending || verifyMut.isPending || !ready}>
-            {createMut.isPending ? "Processing…" : nights ? `Book now — ${formatInr(total)}` : "Select dates"}
-          </Button>
+          {/* Payment method selector */}
+          <div>
+            <p className="mb-2 text-xs font-medium text-stone-600">Payment method</p>
+            <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-stone-200 text-sm font-medium">
+              <button
+                type="button"
+                onClick={() => setPayMethod("razorpay")}
+                className={`py-2.5 transition-colors ${payMethod === "razorpay" ? "bg-brand-600 text-white" : "bg-white text-stone-600 hover:bg-stone-50"}`}
+              >
+                Card / Razorpay
+              </button>
+              <button
+                type="button"
+                onClick={() => setPayMethod("upi")}
+                className={`border-l border-stone-200 py-2.5 transition-colors ${payMethod === "upi" ? "bg-brand-600 text-white" : "bg-white text-stone-600 hover:bg-stone-50"}`}
+              >
+                Pay via UPI
+              </button>
+            </div>
+          </div>
+
+          {/* UPI awaiting payment panel */}
+          {upiPhase === "awaiting" && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-3">
+              <p className="text-sm font-semibold text-blue-800">Complete your UPI payment</p>
+              <div className="flex justify-center">
+                <img
+                  src="/upi-qr.png"
+                  alt="UPI QR Code"
+                  className="h-44 w-44 rounded-xl border border-blue-200 object-contain bg-white p-1"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              </div>
+              <div className="rounded-lg bg-white border border-blue-200 px-3 py-2 text-center">
+                <p className="text-[11px] uppercase tracking-wider text-stone-400 mb-0.5">UPI ID</p>
+                <p className="font-mono font-semibold text-stone-900 select-all">{UPI_ID}</p>
+                <p className="text-xs text-stone-400 mt-0.5">{UPI_NAME}</p>
+              </div>
+              <p className="text-center text-sm font-bold text-blue-900">
+                Pay exactly {formatInr(upiTotal)}
+              </p>
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-stone-600">Enter UTR / Transaction ID after payment</p>
+                <input
+                  type="text"
+                  value={utr}
+                  onChange={(e) => setUtr(e.target.value)}
+                  placeholder="e.g. 123456789012"
+                  className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                />
+              </div>
+              <Button
+                type="button"
+                className="w-full"
+                disabled={!utr.trim() || upiConfirmMut.isPending}
+                onClick={() => upiConfirmMut.mutate({ bookingId: upiBookingId, utr })}
+              >
+                {upiConfirmMut.isPending ? "Submitting…" : "Confirm payment"}
+              </Button>
+            </div>
+          )}
+
+          {upiPhase === "done" && (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
+              <p className="text-sm font-semibold text-green-800">Payment submitted!</p>
+              <p className="mt-1 text-xs text-green-700">Your booking is pending host confirmation. UTR: {utr}</p>
+            </div>
+          )}
+
+          {upiPhase === "idle" && (
+            <Button type="submit" className="h-12 w-full text-base" disabled={createMut.isPending || verifyMut.isPending || (payMethod === "razorpay" && !ready)}>
+              {createMut.isPending ? "Processing…" : nights ? `Book now — ${formatInr(total)}` : "Select dates"}
+            </Button>
+          )}
           <p className="text-center text-xs text-stone-400">You won&apos;t be charged until the host confirms.</p>
         </form>
       </div>

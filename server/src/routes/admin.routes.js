@@ -12,6 +12,8 @@ const {
   setUserRoles,
   reGeocodeListing,
   reGeocodeAll,
+  getAllListings,
+  deleteListing,
 } = require("../controllers/admin.controller");
 const { authMiddleware } = require("../middleware/auth.middleware");
 const { roleGuard } = require("../middleware/role.middleware");
@@ -19,8 +21,10 @@ const { roleGuard } = require("../middleware/role.middleware");
 const router = express.Router();
 router.use(authMiddleware, roleGuard("admin"));
 router.get("/listings/pending", pendingListings);
+router.get("/listings/all", getAllListings);
 router.put("/listings/:id/approve", approveListing);
 router.put("/listings/:id/reject", rejectListing);
+router.delete("/listings/:id", deleteListing);
 router.get("/kyc/pending", pendingKyc);
 router.put("/kyc/:userId/approve", approveKyc);
 router.put("/kyc/:userId/reject", rejectKyc);

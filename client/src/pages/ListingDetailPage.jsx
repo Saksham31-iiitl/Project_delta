@@ -17,9 +17,11 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
 import * as listingsApi from "@api/listings.api.js";
 import * as reviewsApi from "@api/reviews.api.js";
 import { BookingWidget } from "@components/booking/BookingWidget.jsx";
+import { useAuthStore } from "@stores/authStore.js";
 import { EmptyState } from "@components/common/EmptyState.jsx";
 import { Spinner } from "@components/common/Spinner.jsx";
 import { PageWrapper } from "@components/layout/PageWrapper.jsx";
@@ -97,6 +99,8 @@ function PhotoPlaceholder({ type }) {
   );
 }
 
+const MAP_OPTIONS = { disableDefaultUI: true, zoomControl: true, clickableIcons: false };
+
 export default function ListingDetailPage() {
   const { id } = useParams();
   const [sp] = useSearchParams();
@@ -104,6 +108,13 @@ export default function ListingDetailPage() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const currentUser = useAuthStore((s) => s.user);
+
+  const { isLoaded: mapsLoaded } = useJsApiLoader({
+    id: "nearbystay-map",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+    libraries: ["places"],
+  });
 
   const { data: listing, isPending, isError } = useQuery({
     queryKey: ["listing", id],
@@ -154,9 +165,17 @@ export default function ListingDetailPage() {
   const dist = formatDistanceKm(listing.distanceKm);
   const amenities = listing.amenities || [];
   const visibleAmenities = showAllAmenities ? amenities : amenities.slice(0, 6);
-  const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   const shownReviews = showAllReviews ? reviews : reviews.slice(0, 3);
+
+  const coords = listing?.location?.coordinates; // [lng, lat]
+  const listingLat = coords?.[1];
+  const listingLng = coords?.[0];
+  const hasCoords = listingLat != null && listingLng != null;
+
+  const isOwnListing =
+    currentUser && listing &&
+    String(currentUser._id) === String(listing.hostId?._id ?? listing.hostId);
 
   return (
     <PageWrapper className="pb-28 lg:pb-10">
@@ -273,9 +292,6 @@ export default function ListingDetailPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-base font-semibold text-stone-900">{host.fullName || "Host"}</p>
-                <p className="mt-0.5 text-sm text-stone-600">
-                  Trust score: <span className="font-semibold text-stone-800">{host.trustScore ?? "—"}</span>/100
-                </p>
                 {host.kycStatus === "verified" ? (
                   <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
                     <Check className="h-3 w-3" aria-hidden />
@@ -318,16 +334,30 @@ export default function ListingDetailPage() {
 
           <section className="mt-10">
             <h2 className="text-lg font-semibold text-stone-900">Where you&apos;ll stay</h2>
-            <div className="mt-3 h-[160px] overflow-hidden rounded-xl border border-stone-200 bg-stone-100 sm:h-[200px] md:h-[240px]">
-              {mapsKey ? (
-                <div className="flex h-full items-center justify-center text-sm text-stone-500">
-                  <MapPin className="mr-2 h-5 w-5 text-brand-500" aria-hidden />
-                  Map preview (enable Static Maps for embed)
-                </div>
+            <div className="mt-3 h-[200px] overflow-hidden rounded-xl border border-stone-200 bg-stone-100 sm:h-[240px]">
+              {mapsLoaded && hasCoords ? (
+                <GoogleMap
+                  mapContainerClassName="h-full w-full"
+                  center={{ lat: listingLat, lng: listingLng }}
+                  zoom={15}
+                  options={MAP_OPTIONS}
+                >
+                  <Marker
+                    position={{ lat: listingLat, lng: listingLng }}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 10,
+                      fillColor: "#1b6b47",
+                      fillOpacity: 1,
+                      strokeWeight: 2,
+                      strokeColor: "#fff",
+                    }}
+                  />
+                </GoogleMap>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-2 text-stone-400">
                   <MapPin className="h-8 w-8" aria-hidden />
-                  <p className="text-[13px]">Map view available when connected</p>
+                  <p className="text-[13px]">Map unavailable</p>
                 </div>
               )}
             </div>
@@ -402,7 +432,15 @@ export default function ListingDetailPage() {
         </div>
 
         <div className="lg:col-span-1">
-          <BookingWidget listing={listing} eventId={eventId} />
+          {isOwnListing ? (
+            <div className="rounded-xl border border-brand-200 bg-brand-50 p-5 text-center lg:sticky lg:top-24">
+              <Home className="mx-auto mb-2 h-8 w-8 text-brand-400" />
+              <p className="font-semibold text-brand-800">This is your listing</p>
+              <p className="mt-1 text-sm text-brand-600">Guests will see the booking widget here.</p>
+            </div>
+          ) : (
+            <BookingWidget listing={listing} eventId={eventId} />
+          )}
         </div>
       </div>
     </PageWrapper>

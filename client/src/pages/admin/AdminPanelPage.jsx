@@ -7,8 +7,10 @@ import {
   CheckCircle2,
   ClipboardList,
   Home,
+  List,
   MapPin,
   Search,
+  Trash2,
   UserCog,
   Users,
   XCircle,
@@ -461,6 +463,144 @@ function UsersTab() {
   );
 }
 
+/* ── All Listings tab ──────────────────────────────────── */
+const STATUS_BADGE = {
+  active:       "bg-green-100 text-green-700",
+  under_review: "bg-amber-100 text-amber-700",
+  paused:       "bg-blue-100 text-blue-700",
+  rejected:     "bg-red-100 text-red-700",
+};
+
+function AllListingsTab() {
+  const qc = useQueryClient();
+  const [search, setSearch]         = useState("");
+  const [confirmId, setConfirmId]   = useState(null);
+
+  const { data: listings = [], isPending } = useQuery({
+    queryKey: ["admin-all-listings"],
+    queryFn: () => adminApi.getAllListings().then((r) => r.data),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id) => adminApi.deleteListing(id).then((r) => r.data),
+    onSuccess: (_, id) => {
+      toast.success("Listing deleted");
+      qc.setQueryData(["admin-all-listings"], (prev = []) => prev.filter((l) => l._id !== id));
+      qc.invalidateQueries({ queryKey: ["admin-analytics"] });
+      setConfirmId(null);
+    },
+    onError: (e) => toast.error(e.response?.data?.message || "Delete failed"),
+  });
+
+  const q = search.trim().toLowerCase();
+  const visible = listings.filter((l) => {
+    if (!q) return true;
+    return (
+      l.title?.toLowerCase().includes(q) ||
+      l.type?.toLowerCase().includes(q) ||
+      l.address?.city?.toLowerCase().includes(q) ||
+      l.address?.state?.toLowerCase().includes(q)
+    );
+  });
+
+  if (isPending) return <div className="flex justify-center py-16"><Spinner /></div>;
+
+  return (
+    <div className="space-y-4">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Filter by title, type, city…"
+          className="w-full rounded-xl border border-stone-200 py-2.5 pl-9 pr-3 text-sm placeholder:text-stone-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+        />
+      </div>
+
+      <p className="text-sm text-stone-500">
+        <span className="font-semibold text-stone-900">{visible.length}</span> listing{visible.length !== 1 ? "s" : ""}
+      </p>
+
+      {visible.length === 0 && (
+        <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-200 bg-stone-50 py-16 text-center">
+          <Home className="mb-3 h-10 w-10 text-stone-300" />
+          <p className="font-medium text-stone-600">No listings found</p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {visible.map((l) => (
+          <motion.div
+            key={l._id}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-white p-4"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              {l.photos?.[0] ? (
+                <img src={l.photos[0]} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50">
+                  <Home className="h-5 w-5 text-teal-600" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-semibold capitalize text-stone-900">
+                  {l.title || l.type || "Listing"}
+                </p>
+                <p className="truncate text-xs text-stone-500 capitalize">
+                  {l.type} · {[l.address?.city, l.address?.state].filter(Boolean).join(", ")}
+                </p>
+                {l.pricePerNight && (
+                  <p className="text-xs text-stone-400">₹{l.pricePerNight}/night</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${STATUS_BADGE[l.status] || "bg-stone-100 text-stone-500"}`}>
+                {l.status?.replace("_", " ")}
+              </span>
+
+              {confirmId === l._id ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-stone-500">Delete?</span>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={deleteMut.isPending}
+                    onClick={() => deleteMut.mutate(l._id)}
+                    className="flex items-center gap-1"
+                  >
+                    {deleteMut.isPending ? "…" : "Yes, delete"}
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-xs text-stone-400 hover:text-stone-600"
+                    onClick={() => setConfirmId(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmId(l._id)}
+                  className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Main page ─────────────────────────────────────────── */
 export default function AdminPanelPage() {
   const [tab, setTab] = useState("listings");
@@ -487,14 +627,16 @@ export default function AdminPanelPage() {
       {/* Tab bar */}
       <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-stone-200 bg-stone-50 p-1.5">
         <Tab active={tab === "overview"} onClick={() => setTab("overview")} icon={BarChart3}     label="Overview" />
-        <Tab active={tab === "listings"} onClick={() => setTab("listings")} icon={ClipboardList} label="Listing Approvals" badge={pendingListings.length} />
-        <Tab active={tab === "users"}    onClick={() => setTab("users")}    icon={UserCog}       label="Manage Users" />
+        <Tab active={tab === "listings"} onClick={() => setTab("listings")} icon={ClipboardList} label="Approvals" badge={pendingListings.length} />
+        <Tab active={tab === "allListings"} onClick={() => setTab("allListings")} icon={List}    label="All Listings" />
+        <Tab active={tab === "users"}    onClick={() => setTab("users")}    icon={UserCog}       label="Users" />
       </div>
 
       {/* Tab content */}
-      {tab === "overview" && <OverviewTab analytics={analytics} />}
-      {tab === "listings" && <ListingsTab />}
-      {tab === "users"    && <UsersTab />}
+      {tab === "overview"    && <OverviewTab analytics={analytics} />}
+      {tab === "listings"    && <ListingsTab />}
+      {tab === "allListings" && <AllListingsTab />}
+      {tab === "users"       && <UsersTab />}
     </PageWrapper>
   );
 }
