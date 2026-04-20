@@ -10,6 +10,8 @@ const {
   getAllUsers,
   searchUser,
   setUserRoles,
+  reGeocodeListing,
+  reGeocodeAll,
 } = require("../controllers/admin.controller");
 const { authMiddleware } = require("../middleware/auth.middleware");
 const { roleGuard } = require("../middleware/role.middleware");
@@ -26,5 +28,7 @@ router.get("/analytics", analytics);
 router.get("/users", getAllUsers);
 router.get("/users/search", searchUser);
 router.put("/users/:id/roles", setUserRoles);
+router.post("/listings/:id/geocode", reGeocodeListing);
+router.post("/listings/geocode-all", reGeocodeAll);
 
 module.exports = router;

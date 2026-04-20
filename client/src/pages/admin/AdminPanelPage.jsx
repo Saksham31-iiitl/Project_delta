@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Home,
+  MapPin,
   Search,
   UserCog,
   Users,
@@ -57,11 +58,52 @@ function Tab({ active, onClick, icon: Icon, label, badge }) {
 
 /* ── Overview tab ──────────────────────────────────────── */
 function OverviewTab({ analytics }) {
+  const [fixing, setFixing] = useState(false);
+  const [fixResult, setFixResult] = useState(null);
+
+  const handleFixAll = async () => {
+    setFixing(true);
+    setFixResult(null);
+    try {
+      const res = await adminApi.reGeocodeAll();
+      setFixResult(res.data);
+      toast.success(`Fixed ${res.data.fixed} of ${res.data.total} listings`);
+    } catch {
+      toast.error("Fix failed — check server logs");
+    } finally {
+      setFixing(false);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      <StatCard icon={Users}         label="Total Users"     value={analytics?.users}         color="bg-brand-600" />
-      <StatCard icon={Home}          label="Active Listings" value={analytics?.activeListings} color="bg-teal-500" />
-      <StatCard icon={ClipboardList} label="Total Bookings"  value={analytics?.bookings}       color="bg-accent-500" />
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatCard icon={Users}         label="Total Users"     value={analytics?.users}         color="bg-brand-600" />
+        <StatCard icon={Home}          label="Active Listings" value={analytics?.activeListings} color="bg-teal-500" />
+        <StatCard icon={ClipboardList} label="Total Bookings"  value={analytics?.bookings}       color="bg-accent-500" />
+      </div>
+
+      {/* Fix map coordinates tool */}
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+              <MapPin className="h-4 w-4" /> Fix listing map coordinates
+            </p>
+            <p className="mt-1 text-xs text-amber-700">
+              Listings submitted without a map pin get Delhi default coordinates. Click to auto-fix all of them from their address.
+            </p>
+            {fixResult && (
+              <p className="mt-1 text-xs font-medium text-green-700">
+                ✓ Fixed {fixResult.fixed} / {fixResult.total} listings
+              </p>
+            )}
+          </div>
+          <Button size="sm" onClick={handleFixAll} disabled={fixing} className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white">
+            {fixing ? "Fixing…" : "Fix All Pins"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

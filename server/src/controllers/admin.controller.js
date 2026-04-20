@@ -1,6 +1,7 @@
 const Listing = require("../models/Listing");
 const User = require("../models/User");
 const Booking = require("../models/Booking");
+const { geocodeAddress } = require("../utils/geocode");
 
 async function pendingListings(req, res) {
   const list = await Listing.find({ status: "under_review" }).sort({ createdAt: 1 });
@@ -106,8 +107,51 @@ async function setUserRoles(req, res) {
   res.json(user);
 }
 
+async function reGeocodeListing(req, res) {
+  const listing = await Listing.findById(req.params.id);
+  if (!listing) return res.status(404).json({ message: "Listing not found" });
+
+  const { address } = listing;
+  const parts = [address?.street, address?.locality, address?.city, address?.state, address?.pincode, "India"];
+  const coords = await geocodeAddress(parts);
+  if (!coords) return res.status(422).json({ message: "Could not geocode address — check city/state fields" });
+
+  listing.location = { type: "Point", coordinates: [coords.lng, coords.lat] };
+  await listing.save();
+  res.json({ ok: true, lat: coords.lat, lng: coords.lng });
+}
+
+async function reGeocodeAll(req, res) {
+  const DELHI_LNG = 77.2090;
+  const DELHI_LAT = 28.6139;
+  const EPSILON   = 0.05;
+
+  // Find listings stored at (or near) the Delhi default — these have bad coords
+  const badListings = await Listing.find({
+    "location.coordinates.0": { $gt: DELHI_LNG - EPSILON, $lt: DELHI_LNG + EPSILON },
+    "location.coordinates.1": { $gt: DELHI_LAT - EPSILON, $lt: DELHI_LAT + EPSILON },
+  }).lean();
+
+  let fixed = 0;
+  for (const l of badListings) {
+    const { address } = l;
+    const parts = [address?.street, address?.locality, address?.city, address?.state, address?.pincode, "India"];
+    const coords = await geocodeAddress(parts);
+    if (!coords) continue;
+    await Listing.findByIdAndUpdate(l._id, {
+      location: { type: "Point", coordinates: [coords.lng, coords.lat] },
+    });
+    fixed++;
+    // Nominatim rate-limit: 1 req/sec
+    await new Promise((r) => setTimeout(r, 1100));
+  }
+
+  res.json({ total: badListings.length, fixed });
+}
+
 module.exports = {
   pendingListings, approveListing, rejectListing,
   pendingKyc, approveKyc, rejectKyc,
   analytics, getAllUsers, searchUser, setUserRoles,
+  reGeocodeListing, reGeocodeAll,
 };

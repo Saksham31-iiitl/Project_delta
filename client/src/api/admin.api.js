@@ -30,3 +30,6 @@ export const searchUser = (email) =>
 
 export const setUserRoles = (id, roles) =>
   mockOr(() => api.put(`/admin/users/${id}/roles`, { roles }), () => ({ _id: id, roles }));
+
+export const reGeocodeListing = (id) => api.post(`/admin/listings/${id}/geocode`);
+export const reGeocodeAll     = ()   => api.post("/admin/listings/geocode-all");
