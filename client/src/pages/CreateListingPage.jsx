@@ -34,6 +34,48 @@ import { PageWrapper } from "@components/layout/PageWrapper.jsx";
 
 const GMAPS_LIBS = ["places"];
 
+/* ─── India states & cities ───────────────────────────────── */
+const INDIA_STATES_CITIES = {
+  "Andhra Pradesh": ["Visakhapatnam","Vijayawada","Guntur","Nellore","Kurnool","Tirupati","Kakinada","Rajahmundry","Kadapa","Anantapur"],
+  "Arunachal Pradesh": ["Itanagar","Naharlagun","Pasighat","Tezpur"],
+  "Assam": ["Guwahati","Silchar","Dibrugarh","Jorhat","Nagaon","Tinsukia","Tezpur"],
+  "Bihar": ["Patna","Gaya","Bhagalpur","Muzaffarpur","Darbhanga","Purnia","Arrah","Begusarai"],
+  "Chhattisgarh": ["Raipur","Bhilai","Bilaspur","Korba","Durg","Rajnandgaon"],
+  "Goa": ["Panaji","Margao","Vasco da Gama","Mapusa","Ponda"],
+  "Gujarat": ["Ahmedabad","Surat","Vadodara","Rajkot","Bhavnagar","Jamnagar","Gandhinagar","Junagadh","Anand"],
+  "Haryana": ["Faridabad","Gurugram","Panipat","Ambala","Yamunanagar","Rohtak","Hisar","Karnal","Sonipat"],
+  "Himachal Pradesh": ["Shimla","Mandi","Solan","Dharamshala","Palampur","Kullu","Manali","Baddi"],
+  "Jharkhand": ["Ranchi","Jamshedpur","Dhanbad","Bokaro","Deoghar","Hazaribagh","Giridih"],
+  "Karnataka": ["Bengaluru","Mysuru","Hubballi","Mangaluru","Belagavi","Kalaburagi","Davanagere","Bellary","Vijayapura","Shivamogga","Tumakuru","Dharwad"],
+  "Kerala": ["Thiruvananthapuram","Kochi","Kozhikode","Thrissur","Kollam","Alappuzha","Palakkad","Malappuram","Kannur","Kottayam"],
+  "Madhya Pradesh": ["Bhopal","Indore","Gwalior","Jabalpur","Ujjain","Sagar","Dewas","Satna","Ratlam","Rewa","Burhanpur"],
+  "Maharashtra": ["Mumbai","Pune","Nagpur","Nashik","Aurangabad","Solapur","Kolhapur","Amravati","Nanded","Thane","Pimpri-Chinchwad","Vasai-Virar"],
+  "Manipur": ["Imphal","Thoubal","Bishnupur","Churachandpur"],
+  "Meghalaya": ["Shillong","Tura","Jowai"],
+  "Mizoram": ["Aizawl","Lunglei","Champhai"],
+  "Nagaland": ["Kohima","Dimapur","Mokokchung"],
+  "Odisha": ["Bhubaneswar","Cuttack","Rourkela","Brahmapur","Sambalpur","Puri","Balasore","Baripada"],
+  "Punjab": ["Ludhiana","Amritsar","Jalandhar","Patiala","Bathinda","Mohali","Hoshiarpur","Pathankot"],
+  "Rajasthan": ["Jaipur","Jodhpur","Kota","Bikaner","Ajmer","Udaipur","Bhilwara","Alwar","Sikar","Bharatpur"],
+  "Sikkim": ["Gangtok","Namchi","Gyalshing"],
+  "Tamil Nadu": ["Chennai","Coimbatore","Madurai","Tiruchirappalli","Salem","Tirunelveli","Tiruppur","Erode","Vellore","Thoothukudi","Dindigul"],
+  "Telangana": ["Hyderabad","Warangal","Nizamabad","Karimnagar","Khammam","Mahbubnagar","Nalgonda","Ramagundam"],
+  "Tripura": ["Agartala","Udaipur","Dharmanagar"],
+  "Uttar Pradesh": ["Lucknow","Kanpur","Agra","Varanasi","Meerut","Prayagraj","Ghaziabad","Noida","Bareilly","Aligarh","Moradabad","Saharanpur","Gorakhpur","Ayodhya","Mathura","Jhansi","Firozabad"],
+  "Uttarakhand": ["Dehradun","Haridwar","Roorkee","Rishikesh","Haldwani","Nainital","Mussoorie"],
+  "West Bengal": ["Kolkata","Asansol","Howrah","Durgapur","Siliguri","Bardhaman","Malda","Baharampur"],
+  "Delhi": ["New Delhi","Dwarka","Rohini","Shahdara","Laxmi Nagar","Janakpuri","Pitampura","Saket","Vasant Kunj","Connaught Place"],
+  "Chandigarh": ["Chandigarh"],
+  "Puducherry": ["Puducherry","Karaikal"],
+  "Jammu & Kashmir": ["Srinagar","Jammu","Sopore","Baramulla","Anantnag","Udhampur"],
+  "Ladakh": ["Leh","Kargil"],
+  "Andaman & Nicobar Islands": ["Port Blair"],
+  "Dadra & Nagar Haveli": ["Silvassa"],
+  "Daman & Diu": ["Daman","Diu"],
+};
+
+const STATE_LIST = Object.keys(INDIA_STATES_CITIES).sort();
+
 /* ─── Schema ─────────────────────────────────────────────── */
 const schema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -183,6 +225,7 @@ export default function CreateListingPage() {
   });
 
   const [showMap, setShowMap] = useState(false);
+  const [pinManuallySet, setPinManuallySet] = useState(false);
 
   const {
     register,
@@ -202,8 +245,8 @@ export default function CreateListingPage() {
       pricePerNight: "",
       street: "",
       locality: "",
-      city: "New Delhi",
-      state: "Delhi",
+      city: "",
+      state: "",
       pincode: "",
       nearbyVenueArea: "",
       lat: 28.6139,
@@ -238,14 +281,31 @@ export default function CreateListingPage() {
     onError: (e) => toast.error(e.response?.data?.message || "Could not submit listing"),
   });
 
-  const onSubmit = (v) => {
+  const geocodeAddress = async (v) => {
+    if (!mapsLoaded || typeof window.google === "undefined") return { lat: v.lat, lng: v.lng };
+    const address = [v.street, v.locality, v.city, v.state, v.pincode, "India"].filter(Boolean).join(", ");
+    return new Promise((resolve) => {
+      new window.google.maps.Geocoder().geocode({ address }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          resolve({ lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng() });
+        } else {
+          resolve({ lat: v.lat, lng: v.lng });
+        }
+      });
+    });
+  };
+
+  const onSubmit = async (v) => {
     const rules = [
-      v.noSmoking  ? "No smoking"  : null,
-      v.noAlcohol  ? "No alcohol"  : null,
-      v.noParties  ? "No parties"  : null,
+      v.noSmoking   ? "No smoking"   : null,
+      v.noAlcohol   ? "No alcohol"   : null,
+      v.noParties   ? "No parties"   : null,
       v.petFriendly ? "Pets allowed" : null,
       v.rules?.trim() || null,
     ].filter(Boolean).join(". ");
+
+    // Auto-geocode address if host didn't manually place a pin
+    const coords = pinManuallySet ? { lat: v.lat, lng: v.lng } : await geocodeAddress(v);
 
     mut.mutate({
       title: v.title,
@@ -261,8 +321,8 @@ export default function CreateListingPage() {
       checkOutTime: v.checkoutTime,
       bookingType: v.bookingType,
       nearbyVenueArea: v.nearbyVenueArea || undefined,
-      lat: v.lat,
-      lng: v.lng,
+      lat: coords.lat,
+      lng: coords.lng,
       address: {
         street: v.street || undefined,
         locality: v.locality,
@@ -381,14 +441,41 @@ export default function CreateListingPage() {
         {/* ── 4. Location ── */}
         <Section title="Location">
           <div className="space-y-3">
-            <Input id="locality" label="Locality / Area" placeholder="e.g. Dwarka Sector 10" {...register("locality")} error={errors.locality?.message} />
             <div className="grid grid-cols-2 gap-3">
-              <Input id="city" label="City" {...register("city")} error={errors.city?.message} />
-              <Input id="pincode" label="Pincode" {...register("pincode")} />
+              {/* State dropdown */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-stone-700">State</label>
+                <select
+                  className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  {...register("state")}
+                  onChange={(e) => {
+                    setValue("state", e.target.value);
+                    setValue("city", ""); // reset city when state changes
+                  }}
+                >
+                  <option value="">Select state…</option>
+                  {STATE_LIST.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              {/* City dropdown filtered by state */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-stone-700">City</label>
+                <select
+                  className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  {...register("city")}
+                >
+                  <option value="">Select city…</option>
+                  {(INDIA_STATES_CITIES[watch("state")] || []).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city.message}</p>}
+              </div>
             </div>
+            <Input id="locality" label="Locality / Area" placeholder="e.g. Gomti Nagar, Hazratganj" {...register("locality")} error={errors.locality?.message} />
             <div className="grid grid-cols-2 gap-3">
               <Input id="street" label="Street / Colony (optional)" {...register("street")} />
-              <Input id="state" label="State" {...register("state")} />
+              <Input id="pincode" label="Pincode" {...register("pincode")} />
             </div>
             <div>
               <label className="mb-1 flex items-center gap-1.5 text-sm font-medium text-stone-700">
@@ -434,6 +521,7 @@ export default function CreateListingPage() {
                     onPick={(lat, lng) => {
                       setValue("lat", lat);
                       setValue("lng", lng);
+                      setPinManuallySet(true);
                     }}
                     onAddressFill={(fields) => {
                       if (fields.street)   setValue("street",   fields.street);
