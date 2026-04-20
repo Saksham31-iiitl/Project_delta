@@ -98,26 +98,29 @@ function SearchContent({ isLoaded, mapsEnabled }) {
   const [manualInput, setManualInput] = useState(areaLabel);
   const [mobileView, setMobileView]   = useState("list");
   const [selected, setSelected]       = useState(null);
+  // mapCenter is LOCAL state — driven by user searches, NOT URL params
+  // This prevents @react-google-maps re-calling setCenter on every re-render
+  const [mapCenter, setMapCenter] = useState({ lat, lng });
   const cardRefs  = useRef({});
   const acRef     = useRef(null);
-  const mapRef    = useRef(null); // direct handle to the Google Map instance
   const inputRef  = useRef(null);
+
+  useEffect(() => {
+  setMapCenter({ lat, lng });
+}, [lat, lng]);
 
   useEffect(() => { setManualInput(areaLabel); }, [areaLabel]);
 
-  // Move map + update URL params
+  // Move map + update URL params for search query
   const goToLocation = useCallback((newLat, newLng, label) => {
-    // Pan the map immediately — no waiting for re-render cycle
-    if (mapRef.current) {
-      mapRef.current.panTo({ lat: newLat, lng: newLng });
-      mapRef.current.setZoom(13);
-    }
+    const newCenter = { lat: Number(newLat), lng: Number(newLng) };
+    setMapCenter(newCenter);        // drives MapView center prop immediately
+    setSelected(null);
     const p = new URLSearchParams(params);
     p.set("lat", String(newLat));
     p.set("lng", String(newLng));
     if (label) p.set("area", label); else p.delete("area");
     setParams(p, { replace: true });
-    setSelected(null);
   }, [params, setParams]);
 
   const qParams = useMemo(
@@ -145,7 +148,7 @@ function SearchContent({ isLoaded, mapsEnabled }) {
 
   // Geocode whatever text is in the input (for Enter / Search button)
   const geocodeInput = () => {
-    const text = inputRef.current?.value?.trim() || manualInput.trim();
+    const text = manualInput.trim();
     if (!text || typeof window.google === "undefined") return;
     new window.google.maps.Geocoder().geocode(
       { address: text + ", India" },
@@ -188,7 +191,6 @@ function SearchContent({ isLoaded, mapsEnabled }) {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
-  const center   = { lat, lng };
   const metaLine = searchAreaWithinRadius(areaLabel, radiusKm);
   const showMap  = mapsEnabled && isLoaded;
 
@@ -214,7 +216,8 @@ function SearchContent({ isLoaded, mapsEnabled }) {
                   ref={inputRef}
                   className="w-full border-0 bg-transparent text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none"
                   placeholder="Search city, area or venue…"
-                  defaultValue={areaLabel}
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); geocodeInput(); } }}
                 />
               </Autocomplete>
@@ -302,13 +305,13 @@ function SearchContent({ isLoaded, mapsEnabled }) {
     <div className="relative h-full w-full">
       {showMap ? (
         <MapView
-          center={center}
+          center={mapCenter}
           listings={sortedListings}
           radiusKm={radiusKm}
           isLoaded={isLoaded}
           selectedId={selected?._id}
           onListingClick={handlePinClick}
-          onMapLoad={(map) => { mapRef.current = map; }}
+          searchPin={!!areaLabel}
         />
       ) : (
         <div className="flex h-full items-center justify-center rounded-xl bg-stone-100 text-sm text-stone-400">

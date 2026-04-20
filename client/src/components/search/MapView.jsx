@@ -1,18 +1,13 @@
 import { Circle, GoogleMap, Marker } from "@react-google-maps/api";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { formatCompactInr } from "@utils/format.js";
 
-const defaultCenter = { lat: 26.9124, lng: 75.7873 };
+const DEFAULT_CENTER = { lat: 26.9124, lng: 75.7873 }; // Jaipur fallback
 
-const mapOptions = {
-  disableDefaultUI: true,
-  zoomControl: true,
-  clickableIcons: false,
-  styles: [
-    { featureType: "poi",     stylers: [{ visibility: "off" }] },
-    { featureType: "transit", stylers: [{ visibility: "off" }] },
-  ],
-};
+const MAP_STYLES = [
+  { featureType: "poi",     stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
 
 export function MapView({
   center,
@@ -22,15 +17,43 @@ export function MapView({
   isLoaded,
   selectedId,
   onListingClick,
-  onMapLoad,   // ← parent can receive the map instance directly
+  searchPin = false,
 }) {
-  const mapCenter = center?.lat && center?.lng ? center : defaultCenter;
-  const mapRef = useRef(null);
+  const mapRef        = useRef(null);
+  const pendingCenter = useRef(null); // stores panTo target if map not loaded yet
+
+  const resolvedCenter =
+  center?.lat != null && center?.lng != null
+    ? center
+    : DEFAULT_CENTER;
+
+  const options = useMemo(() => ({
+    disableDefaultUI: true,
+    zoomControl: true,
+    clickableIcons: false,
+    styles: MAP_STYLES,
+  }), []);
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;
-    onMapLoad?.(map);           // expose instance to parent immediately
-  }, [onMapLoad]);
+    // Apply any panTo that was requested before the map was ready
+    if (pendingCenter.current) {
+      map.panTo(pendingCenter.current);
+      pendingCenter.current = null;
+    }
+  }, []);
+
+  // Pan whenever center prop changes
+  useEffect(() => {
+    if (!resolvedCenter.lat || !resolvedCenter.lng) return;
+    if (mapRef.current) {
+      mapRef.current.panTo(resolvedCenter);
+    } else {
+      // Map not loaded yet — store so onLoad can apply it
+      pendingCenter.current = resolvedCenter;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedCenter.lat, resolvedCenter.lng]);
 
   if (!isLoaded) {
     return (
@@ -43,12 +66,23 @@ export function MapView({
   return (
     <GoogleMap
       mapContainerClassName="h-full w-full rounded-xl"
-      center={mapCenter}
+      center={resolvedCenter}
       zoom={13}
-      options={mapOptions}
+      options={options}
       onLoad={onLoad}
     >
-      {/* Venue marker + radius circle */}
+      {searchPin && (
+        <Marker
+          position={resolvedCenter}
+          zIndex={15}
+          icon={{
+            url: `data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42"><path d="M16 0C7.163 0 0 7.163 0 16c0 13 16 26 16 26S32 29 32 16C32 7.163 24.837 0 16 0z" fill="%233b82f6" stroke="%23ffffff" stroke-width="2.5"/><circle cx="16" cy="16" r="5.5" fill="%23ffffff"/></svg>`,
+            scaledSize: new window.google.maps.Size(32, 42),
+            anchor: new window.google.maps.Point(16, 42),
+          }}
+        />
+      )}
+
       {venue?.lat != null && venue?.lng != null && (
         <>
           <Marker
@@ -78,7 +112,6 @@ export function MapView({
         </>
       )}
 
-      {/* Listing pins */}
       {listings.map((l) => {
         const coords = l.location?.coordinates;
         if (!coords || coords.length < 2) return null;

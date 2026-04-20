@@ -224,11 +224,6 @@ function MapExplorerInner({ isLoaded }) {
     setCenter({ lat, lng });
     setAreaLabel(label);
     setSelected(null);
-    // Pan immediately — don't wait for re-render
-    if (mapRef.current) {
-      mapRef.current.panTo({ lat, lng });
-      mapRef.current.setZoom(13);
-    }
   };
 
   const onPlaceChanged = () => {
@@ -275,7 +270,6 @@ function MapExplorerInner({ isLoaded }) {
           isLoaded={isLoaded}
           selectedId={selected?._id}
           onListingClick={setSelected}
-          onMapLoad={(map) => { mapRef.current = map; }}
         />
         {/* Bottom gradient */}
         <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center bg-gradient-to-t from-brand-900/60 to-transparent px-4 pb-5 pt-16 pointer-events-none" />
