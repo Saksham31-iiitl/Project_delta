@@ -221,14 +221,22 @@ export function Navbar({ className }) {
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <button
             type="button"
-            className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-stone-900/50 backdrop-blur-sm"
             aria-label="Close menu"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-[min(85%,300px)] flex-col bg-white dark:bg-[#0f1e14] shadow-xl">
-            <div className="flex items-center justify-between border-b border-stone-100 dark:border-[#1e3829] px-4 py-4">
-              <span className="font-display text-[20px] text-brand-800 dark:text-brand-300">HostTheGuest</span>
+          <div className="absolute inset-y-0 left-0 flex w-[min(82%,290px)] flex-col bg-[#fef9f0] dark:bg-[#0f1e14] shadow-2xl overflow-hidden">
+
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 dark:border-[#1e3829]">
               <div className="flex items-center gap-2">
+                <svg width="24" height="24" viewBox="0 0 40 40" fill="none" aria-hidden>
+                  <path d="M4 22 L20 6 L36 22 V34 H26 V24 H14 V34 H4 Z" fill="#1a4731"/>
+                  <circle cx="20" cy="16" r="3" fill="#f5a623"/>
+                </svg>
+                <span className="font-display text-[18px] text-brand-800 dark:text-brand-300 tracking-tight">HostTheGuest</span>
+              </div>
+              <div className="flex items-center gap-1.5">
                 <ThemeToggle />
                 <button type="button" className="rounded-lg p-1.5 text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-[#172a1e]" onClick={() => setDrawerOpen(false)}>
                   <X className="h-5 w-5" />
@@ -236,42 +244,68 @@ export function Navbar({ className }) {
               </div>
             </div>
 
-            {token && user && (
-              <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#1e3829] bg-stone-50 dark:bg-[#132419] px-4 py-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-bold text-white">
+            {/* User profile strip */}
+            {token && user ? (
+              <div className="flex items-center gap-3 bg-stone-50 dark:bg-[#132419] px-5 py-3.5 border-b border-stone-100 dark:border-[#1e3829]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-bold text-white">
                   {initials(user) ?? <User className="h-4 w-4 text-white" />}
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">{user.fullName || "Welcome back"}</p>
-                  <p className="truncate text-xs text-stone-400 dark:text-stone-500">{user.phone || user.email || ""}</p>
+                  <p className="truncate text-[11px] text-stone-400 dark:text-stone-500">{user.phone || user.email || ""}</p>
                 </div>
+              </div>
+            ) : (
+              <div className="flex gap-2 px-5 py-3.5 border-b border-stone-100 dark:border-[#1e3829]">
+                <Link to="/login" className="flex-1 rounded-xl border border-brand-700 px-4 py-2.5 text-center text-sm font-semibold text-brand-700 dark:text-brand-300 dark:border-brand-700/50 hover:bg-brand-50 dark:hover:bg-[#16301e] transition-colors" onClick={() => setDrawerOpen(false)}>
+                  Log in
+                </Link>
+                <Link to="/register" className="flex-1 rounded-xl bg-brand-800 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-900 transition-colors" onClick={() => setDrawerOpen(false)}>
+                  Sign up
+                </Link>
               </div>
             )}
 
-            <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-              <NavLink to="/" end className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
-                <Home className="h-5 w-5" /> Home
-              </NavLink>
+            {/* Main nav — mirrors desktop: Stays · Occasion Hubs · For Hosts */}
+            <nav className="flex flex-1 flex-col overflow-y-auto p-3 gap-0.5 bg-[#fef9f0] dark:bg-[#0f1e14]">
+              <p className="px-3 pt-1 pb-2 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Explore</p>
+
               <NavLink to="/search" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
-                <Search className="h-5 w-5" /> Stays
-              </NavLink>
-              <NavLink to="/dashboard" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
-                <Calendar className="h-5 w-5" /> My Bookings
+                <Search className="h-5 w-5 text-brand-500" /> Stays
               </NavLink>
 
-              <div className="my-1.5 border-t border-stone-100 dark:border-[#1e3829]" />
-              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">For Hosts</p>
+              <NavLink to="/organizer" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
+                <Building2 className="h-5 w-5 text-brand-500" /> Occasion Hubs
+              </NavLink>
+
+              <div className="my-2 border-t border-stone-100 dark:border-[#1e3829]" />
+              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">For Hosts</p>
+
               <Link to={hostListPath} className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
-                <Home className="h-5 w-5 text-brand-500" /> List your space
+                <Home className="h-5 w-5 text-brand-500" />
+                <div>
+                  <p>List your space</p>
+                  <p className="text-[11px] font-normal text-stone-400 dark:text-stone-500">Earn from your spare room</p>
+                </div>
               </Link>
               <Link to={createHubPath} className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
-                <Building2 className="h-5 w-5 text-brand-500" /> Create event hub
+                <Building2 className="h-5 w-5 text-accent-500" />
+                <div>
+                  <p>Create event hub</p>
+                  <p className="text-[11px] font-normal text-stone-400 dark:text-stone-500">For wedding &amp; pooja organizers</p>
+                </div>
               </Link>
 
-              {token && (isHost || isAdmin) && (
+              {token && (
                 <>
-                  <div className="my-1.5 border-t border-stone-100 dark:border-[#1e3829]" />
-                  <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Dashboard</p>
+                  <div className="my-2 border-t border-stone-100 dark:border-[#1e3829]" />
+                  <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Account</p>
+                  <Link to="/profile" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
+                    <User className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Profile
+                  </Link>
+                  <Link to="/dashboard" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
+                    <Calendar className="h-5 w-5 text-stone-400 dark:text-stone-500" /> My Bookings
+                  </Link>
                   {isHost && (
                     <Link to="/host" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
                       <LayoutDashboard className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Host Dashboard
@@ -282,15 +316,7 @@ export function Navbar({ className }) {
                       <Shield className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Admin Panel
                     </Link>
                   )}
-                </>
-              )}
-
-              <div className="my-1.5 border-t border-stone-100 dark:border-[#1e3829]" />
-              {token ? (
-                <>
-                  <Link to="/profile" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
-                    <User className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Profile
-                  </Link>
+                  <div className="my-2 border-t border-stone-100 dark:border-[#1e3829]" />
                   <button
                     type="button"
                     className={cn(drawerLinkClass, "w-full text-left text-red-500 dark:text-red-400")}
@@ -299,14 +325,6 @@ export function Navbar({ className }) {
                     <LogOut className="h-5 w-5 text-red-400" /> Log out
                   </button>
                 </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="mx-3 mt-1 flex items-center justify-center gap-2 rounded-xl bg-brand-800 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-900"
-                  onClick={() => setDrawerOpen(false)}
-                >
-                  <User className="h-4 w-4" /> Log in
-                </Link>
               )}
             </nav>
           </div>
