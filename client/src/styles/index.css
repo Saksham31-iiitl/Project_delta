@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-display: "DM Serif Display", Georgia, serif;
@@ -25,7 +26,8 @@
   --color-accent-600: #d4891a;
 
   /* Warm cream — site background */
-  --color-cream: #fbf8f2;
+  --color-cream: #fdf6e8;
+  --color-surface: #fef9f0;
 
   --color-trust-green: #22c55e;
   --color-trust-gold: #eab308;
@@ -77,6 +79,17 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--color-cream);
     @apply text-stone-800;
+  }
+
+  /* Shift stark-white cards/surfaces to warm parchment in light mode */
+  :not(.dark) .bg-white {
+    background-color: #fef9f0;
+  }
+  :not(.dark) .bg-white\/97,
+  :not(.dark) .bg-white\/95,
+  :not(.dark) .bg-white\/90,
+  :not(.dark) .bg-white\/85 {
+    background-color: rgba(254, 249, 240, var(--tw-bg-opacity, 0.97));
   }
 
   h1,
@@ -264,6 +277,156 @@
   scrollbar-width: none;
 }
 .chip-scroll::-webkit-scrollbar { display: none; }
+
+/* ─── Marigold cursor-trail petal (spawned by CursorTrail.jsx) ─ */
+/* styles applied inline via JS; this comment anchors the section */
+
+/* ─── Floating ambient marigold petals ─────────────────────── */
+@keyframes float-petal {
+  0%   { transform: rotate(-45deg) translateY(0) scale(1);    opacity: 0;   }
+  8%   { opacity: 0.55; }
+  88%  { opacity: 0.35; }
+  100% { transform: rotate(-45deg) translateY(-110px) scale(0.55); opacity: 0; }
+}
+.petal-float {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50% 50% 50% 0;
+  background: radial-gradient(circle at 30% 30%, rgba(247,201,72,.85), rgba(245,166,35,.65) 60%, rgba(212,137,26,.4));
+  animation: float-petal var(--petal-dur, 9s) ease-in-out infinite var(--petal-del, 0s);
+}
+
+/* ─── Image reveal: gold wipe curtain on first paint ────────── */
+@keyframes gold-wipe {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0);   }
+}
+.image-reveal {
+  animation: gold-wipe 0.85s cubic-bezier(.4,0,.2,1) both;
+  animation-delay: var(--reveal-delay, 0s);
+}
+
+/* ─── Search bar: shadow expansion on focus ─────────────────── */
+.search-field:focus-within {
+  box-shadow: 0 0 0 3px rgba(245,166,35,.18), 0 8px 24px -8px rgba(15,45,30,.18);
+  transition: box-shadow .3s ease;
+}
+
+/* ─── Card hover parallax helpers ───────────────────────────── */
+.card-title-parallax {
+  transition: transform 0.35s cubic-bezier(.2,.8,.2,1);
+}
+.group:hover .card-title-parallax {
+  transform: translateY(-4px);
+}
+.card-price-parallax {
+  transition: transform 0.35s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s ease;
+}
+.group:hover .card-price-parallax {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px -6px rgba(15,45,30,.22);
+}
+
+/* ─── How-it-works: sticky numeral colour shift ─────────────── */
+.how-num {
+  transition: color 0.55s ease, transform 0.55s ease;
+}
+.how-num-active {
+  color: var(--color-accent-500) !important;
+  transform: scale(1.06);
+}
+
+/* ─── Gold page-transition curtain ──────────────────────────── */
+.gold-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--color-accent-500);
+  pointer-events: none;
+  transform-origin: left;
+}
+
+/* ─── Dark Mode ──────────────────────────────────────────── */
+
+/* Page foundation */
+.dark body {
+  background-color: #0c1a10;
+  color: #f0ece3;
+}
+.dark h1, .dark h2, .dark h3, .dark h4 {
+  color: #f0ece3;
+}
+
+/* White / cream surfaces → deep forest card */
+.dark .bg-white        { background-color: #132419; }
+.dark .bg-white\/97    { background-color: rgba(13, 26, 16, 0.97); }
+.dark .bg-white\/95    { background-color: rgba(13, 26, 16, 0.95); }
+.dark .bg-white\/90    { background-color: rgba(13, 26, 16, 0.90); }
+.dark .bg-white\/85    { background-color: rgba(13, 26, 16, 0.85); }
+.dark .bg-cream        { background-color: #0c1a10; }
+.dark .bg-stone-50     { background-color: #0f1e14; }
+.dark .bg-stone-100    { background-color: #132419; }
+
+/* Badge tinted backgrounds */
+.dark .bg-brand-50     { background-color: #16301e; }
+.dark .bg-brand-100    { background-color: #1a3826; }
+.dark .bg-green-50     { background-color: #0e2018; }
+.dark .bg-purple-50    { background-color: #1c1428; }
+.dark .bg-orange-50    { background-color: #271508; }
+.dark .bg-red-50       { background-color: #280f0f; }
+.dark .bg-blue-50      { background-color: #0f1828; }
+.dark .bg-gold-50      { background-color: #231a06; }
+.dark .bg-amber-50     { background-color: #231a06; }
+
+/* Text hierarchy — stone */
+.dark .text-stone-950  { color: #f8f5ef; }
+.dark .text-stone-900  { color: #f0ece3; }
+.dark .text-stone-800  { color: #e4dfd5; }
+.dark .text-stone-700  { color: #cbc4b8; }
+.dark .text-stone-600  { color: #a09890; }
+.dark .text-stone-500  { color: #7a7268; }
+.dark .text-stone-400  { color: #9a9490; }
+
+/* Text hierarchy — brand (dark forest → light mint so it's readable on dark bg) */
+.dark .text-brand-900  { color: #c0e8d0; }
+.dark .text-brand-800  { color: #a8d8b8; }
+.dark .text-brand-700  { color: #88c8a4; }
+.dark .text-brand-600  { color: #68b890; }
+.dark .text-brand-500  { color: #4ea87c; }
+
+/* Brand backgrounds — darken so they don't clash */
+.dark .bg-brand-100    { background-color: #162c1e; }
+.dark .bg-brand-50     { background-color: #0f2218; }
+
+/* Borders */
+.dark .border-stone-100 { border-color: #182e1f; }
+.dark .border-stone-200 { border-color: #1e3829; }
+.dark .border-stone-300 { border-color: #27473a; }
+
+/* Hover states */
+.dark .hover\:bg-stone-50:hover   { background-color: #172a1e; }
+.dark .hover\:bg-stone-100:hover  { background-color: #1c3225; }
+.dark .hover\:bg-brand-50:hover   { background-color: #16301e; }
+.dark .hover\:bg-amber-50:hover   { background-color: #231a06; }
+.dark .hover\:bg-red-50:hover     { background-color: #280f0f; }
+
+/* Divider lines */
+.dark hr { border-color: #1e3829; }
+.dark .divide-stone-200 > * + * { border-color: #1e3829; }
+
+/* Motif kolam on dark backgrounds — stays as-is (already matches dark) */
+
+/* Listing card dark */
+.dark .listing-card:hover {
+  border-color: #27473a;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Skeleton shimmer dark */
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, #132419 25%, #1a3024 50%, #132419 75%);
+  background-size: 200% 100%;
+}
 
 /* Sonner toasts */
 .nearbystay-toast[data-type="success"] {

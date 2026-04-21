@@ -8,6 +8,106 @@ import { isWishlisted, toggleWishlist } from "@utils/wishlist.js";
 
 const typeShort = { room: "Room", floor: "Floor", home: "Home", suite: "Suite", farmhouse: "Farmhouse" };
 
+function MobileSearchCard({ listing, hubName, eventId, className }) {
+  if (!listing?._id) return null;
+  const title = listingDisplayTitle(listing);
+  const locLine = listingLocationLine(listing);
+  const dist = formatDistanceKm(listing.distanceKm);
+  const kyc = listing.hostId?.kycStatus === "verified" || listing.hostKycVerified;
+  const typePill = typeShort[listing.type] || listing.type;
+  const photo = listing.photos?.[0];
+  const detailTo = eventId
+    ? `/listings/${listing._id}?eventId=${encodeURIComponent(eventId)}`
+    : `/listings/${listing._id}`;
+
+  const [liked, setLiked] = useState(() => isWishlisted(listing._id));
+  const onToggleLike = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLiked(toggleWishlist(listing));
+  };
+
+  return (
+    <Link
+      to={detailTo}
+      className={cn(
+        "block overflow-hidden rounded-2xl border border-stone-200 bg-white",
+        className
+      )}
+    >
+      {/* Hero image */}
+      <div className="relative h-[180px] bg-gradient-to-br from-brand-100 to-brand-50">
+        {photo
+          ? <img src={photo} alt={`Photo of ${title}`} className="h-full w-full object-cover" loading="lazy" />
+          : <Home className="absolute inset-0 m-auto h-10 w-10 text-brand-300" />
+        }
+        {dist && (
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-accent-500 text-brand-900 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
+            {dist}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onToggleLike}
+          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/95 grid place-items-center shadow"
+          aria-label={liked ? "Remove from wishlist" : "Save"}
+        >
+          <Heart className={cn("h-4 w-4 transition-colors", liked ? "fill-red-500 text-red-500" : "text-stone-600")} />
+        </button>
+        {hubName && (
+          <span className="absolute bottom-3 left-3 gold-seal rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+            {hubName}
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[.15em] font-semibold text-brand-700 truncate">
+              {typePill}{locLine ? ` · ${locLine}` : ""}
+            </p>
+            <p className="font-display text-[18px] text-brand-900 leading-tight mt-0.5">{title}</p>
+          </div>
+          {listing.avgRating && (
+            <p className="text-[12px] font-semibold shrink-0 mt-0.5">
+              <span className="text-accent-500">★</span> {listing.avgRating.toFixed(1)}
+              {listing.reviewCount > 0 && <span className="text-stone-400 font-normal"> ({listing.reviewCount})</span>}
+            </p>
+          )}
+        </div>
+
+        {/* Badges */}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {kyc && (
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[9px] font-medium text-brand-700">KYC</span>
+          )}
+          {listing.womenSafe && (
+            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[9px] font-medium text-purple-800">Women safe</span>
+          )}
+          {listing.elderFriendly && (
+            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[9px] font-medium text-orange-800">Elder friendly</span>
+          )}
+        </div>
+
+        <div className="goldrule-soft my-3" />
+
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="font-mono text-[16px] font-semibold text-brand-900">
+              {listing.pricePerNight != null ? `₹${listing.pricePerNight.toLocaleString("en-IN")}` : "—"}
+              <span className="text-[11px] text-stone-400 font-sans font-normal"> /night</span>
+            </p>
+            <p className="text-[10px] text-stone-500">incl. fees</p>
+          </div>
+          <span className="rounded-full bg-brand-800 text-white px-4 py-2 text-[12px] font-semibold">View</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function amenityIcon(name) {
   const n = (name || "").toLowerCase();
   if (n.includes("wifi")) return Wifi;
@@ -23,6 +123,10 @@ function amenityIcon(name) {
 }
 
 export function ListingCard({ listing, variant = "grid", hubName, eventId, className }) {
+  /* ── Mobile search card ───────────────────────────────── */
+  if (variant === "mobile-search") {
+    return <MobileSearchCard listing={listing} hubName={hubName} eventId={eventId} className={className} />;
+  }
   if (!listing?._id) return null;
   const title = listingDisplayTitle(listing);
   const locLine = listingLocationLine(listing);
@@ -90,7 +194,7 @@ export function ListingCard({ listing, variant = "grid", hubName, eventId, class
                 <span className="inline-flex rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
                   {typePill}
                 </span>
-                <h3 className="mt-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-stone-900">{title}</h3>
+                <h3 className="card-title-parallax mt-1.5 line-clamp-2 text-[15px] font-semibold leading-snug text-stone-900">{title}</h3>
                 <p className="mt-0.5 flex items-center gap-1 text-[13px] text-stone-500">
                   <MapPin className="h-3 w-3 shrink-0 text-stone-400" />
                   {locLine}
@@ -133,7 +237,7 @@ export function ListingCard({ listing, variant = "grid", hubName, eventId, class
 
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-stone-100 px-4 py-3">
-            <span className="rounded-full border border-stone-200 bg-cream px-3 py-1.5 font-mono text-[13px] font-semibold text-stone-900">
+            <span className="card-price-parallax rounded-full border border-stone-200 bg-cream px-3 py-1.5 font-mono text-[13px] font-semibold text-stone-900">
               {formatPricePerNight(listing.pricePerNight)}
               <span className="ml-1 font-sans text-[11px] font-normal text-stone-400">/night</span>
             </span>

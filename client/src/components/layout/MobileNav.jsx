@@ -1,4 +1,4 @@
-import { Calendar, Home, Plus, Search, Star, User } from "lucide-react";
+import { Calendar, Heart, Home, Search, User } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@utils/cn.js";
 import { useAuthStore } from "@stores/authStore.js";
@@ -6,63 +6,61 @@ import { useAuthStore } from "@stores/authStore.js";
 export function MobileNav() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
-  const onHub = location.pathname.startsWith("/e/");
 
   if (location.pathname.startsWith("/login")) return null;
 
-  const hubTo = user ? "/organizer" : "/login?redirect=/organizer";
-
-  const Item = ({ to, icon: Icon, label, end }) => (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        cn(
-          "flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-colors min-w-[52px]",
-          isActive ? "text-brand-700" : "text-stone-400"
-        )
-      }
-    >
-      {({ isActive }) => (
-        <>
-          <div className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-xl transition-colors",
-            isActive ? "bg-brand-50" : ""
-          )}>
-            <Icon className="h-5 w-5" aria-hidden />
-          </div>
-          <span className={cn("text-[10px] font-semibold", isActive ? "text-brand-700" : "text-stone-400")}>
-            {label}
-          </span>
-        </>
-      )}
-    </NavLink>
-  );
+  const items = [
+    { to: "/",          icon: Home,     label: "Home",   end: true },
+    { to: "/search",    icon: Search,   label: "Search"           },
+    { to: "/organizer", icon: Heart,    label: "Saved"            },
+    { to: "/dashboard", icon: Calendar, label: "Trips"            },
+    { to: user ? "/profile" : "/login", icon: User, label: "Me"  },
+  ];
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-stone-200 bg-white/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed bottom-2 left-3 right-3 z-50 lg:hidden"
       role="navigation"
       aria-label="Primary mobile"
     >
-      <div className="relative mx-auto flex h-16 max-w-lg items-center justify-around px-2">
-        <Item to="/" icon={Home} label="Home" end />
-        <Item to="/search" icon={Search} label="Explore" />
-
-        {/* Centre FAB — Hub */}
-        <div className="flex flex-col items-center gap-1">
+      <div
+        className="flex items-center justify-around rounded-[24px] bg-white/95 dark:bg-[#0a1a0f]/95 backdrop-blur-md border border-stone-100 dark:border-[#1e3829]"
+        style={{
+          boxShadow: "0 12px 28px -10px rgba(15,45,30,.25)",
+          padding: `10px 8px calc(10px + env(safe-area-inset-bottom))`,
+        }}
+      >
+        {items.map(({ to, icon: Icon, label, end }) => (
           <NavLink
-            to={hubTo}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-500 text-brand-900 shadow-lg shadow-accent-500/30 active:scale-95 transition-transform"
-            aria-label="Occasion hub"
+            key={`${to}-${label}`}
+            to={to}
+            end={end}
+            className="flex flex-1 flex-col items-center gap-0.5 py-1"
           >
-            {onHub ? <Star className="h-5 w-5" /> : <Plus className="h-6 w-6" />}
+            {({ isActive }) => (
+              <>
+                <Icon
+                  className={cn("h-5 w-5 transition-colors", isActive ? "text-brand-800 dark:text-accent-400" : "text-stone-400 dark:text-stone-500")}
+                  aria-hidden
+                />
+                <span
+                  className={cn(
+                    "text-[10px] leading-none font-semibold transition-colors",
+                    isActive ? "text-brand-800 dark:text-accent-400" : "text-stone-400 dark:text-stone-500"
+                  )}
+                >
+                  {label}
+                </span>
+                <span
+                  className={cn(
+                    "mt-0.5 h-1 w-1 rounded-full transition-all duration-200",
+                    isActive ? "bg-accent-500" : "bg-transparent"
+                  )}
+                />
+              </>
+            )}
           </NavLink>
-          <span className="text-[10px] font-semibold text-stone-400">Hub</span>
-        </div>
-
-        <Item to="/dashboard" icon={Calendar} label="Bookings" />
-        <Item to={user ? "/profile" : "/login"} icon={User} label="Me" />
+        ))}
       </div>
     </nav>
   );

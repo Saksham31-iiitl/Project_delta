@@ -21,7 +21,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addRecentlyViewed } from "@utils/recentlyViewed.js";
 import { isWishlisted, toggleWishlist } from "@utils/wishlist.js";
 import { useParams, useSearchParams, Link } from "react-router-dom";
@@ -151,12 +151,38 @@ export default function ListingDetailPage() {
     setLiked(toggleWishlist(listing));
   };
 
+  const bookingRef = useRef(null);
+
+  const scrollToBooking = () => {
+    bookingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="bg-cream">
+      {/* Mobile sticky book-now bar */}
+      {!isOwnListing && (
+        <div className="fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-stone-200 px-5 py-3 flex items-center justify-between lg:hidden shadow-[0_-4px_20px_-8px_rgba(15,45,30,.15)]">
+          <div>
+            <p className="font-mono text-[16px] font-semibold text-brand-900 leading-none">
+              {listing.pricePerNight != null ? `₹${listing.pricePerNight.toLocaleString("en-IN")}` : "—"}
+              <span className="text-[11px] text-stone-400 font-sans font-normal"> /night</span>
+            </p>
+            <p className="text-[10px] text-brand-700 font-semibold mt-0.5">Tap Reserve to book</p>
+          </div>
+          <button
+            type="button"
+            onClick={scrollToBooking}
+            className="rounded-full bg-brand-800 text-white font-semibold px-6 py-3 text-[13px] active:scale-95 transition-transform"
+          >
+            Reserve
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 pb-32 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-16">
 
-        {/* Breadcrumbs */}
-        <p className="mb-4 text-[12px] text-stone-500">
+        {/* Breadcrumbs (desktop only) */}
+        <p className="hidden lg:block mb-4 text-[12px] text-stone-500">
           <Link to="/search" className="hover:text-brand-700">Search</Link>
           {locLine && <><span className="mx-1.5">·</span><span>{locLine}</span></>}
           <span className="mx-1.5">·</span>
@@ -197,7 +223,7 @@ export default function ListingDetailPage() {
               {listing.maxGuests && <><span className="text-stone-300">·</span><span>Sleeps {listing.maxGuests}</span></>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <button
               type="button"
               onClick={handleShare}
@@ -222,7 +248,7 @@ export default function ListingDetailPage() {
 
         {/* Gallery */}
         {photos.length === 0 ? (
-          <div className="flex aspect-[16/7] w-full flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-brand-100 to-brand-50 text-white">
+          <div className="hidden lg:flex aspect-[16/7] w-full flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-brand-100 to-brand-50 text-white">
             <Home className="h-14 w-14 text-brand-300" />
             <p className="mt-2 text-sm text-brand-400">Photo coming soon</p>
           </div>
@@ -248,13 +274,54 @@ export default function ListingDetailPage() {
               ))}
             </div>
 
-            {/* Mobile scroll */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 [-webkit-overflow-scrolling:touch] lg:hidden">
-              {photos.map((src, i) => (
-                <button key={src} type="button" className="relative w-[88vw] shrink-0 overflow-hidden rounded-2xl sm:w-[70vw]" onClick={() => setGalleryOpen(true)}>
-                  <img src={src} alt="" className="aspect-[16/10] w-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
-                </button>
-              ))}
+            {/* Mobile: full-bleed hero with overlaid controls */}
+            <div className="lg:hidden -mx-4 -mt-4 relative">
+              <div className="relative h-[300px] sm:h-[360px] overflow-hidden">
+                <img
+                  src={photos[0]}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="eager"
+                />
+                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                {/* Controls */}
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                  <Link
+                    to="/search"
+                    className="w-10 h-10 rounded-full bg-white/95 grid place-items-center shadow"
+                  >
+                    <X className="h-4 w-4 text-stone-700" />
+                  </Link>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={handleShare} className="w-10 h-10 rounded-full bg-white/95 grid place-items-center shadow">
+                      <Share2 className="h-4 w-4 text-stone-700" />
+                    </button>
+                    <button type="button" onClick={handleWishlist} className="w-10 h-10 rounded-full bg-white/95 grid place-items-center shadow">
+                      <Heart className={cn("h-4 w-4", liked ? "fill-red-500 text-red-500" : "text-stone-700")} />
+                    </button>
+                  </div>
+                </div>
+                {/* Photo counter */}
+                <div className="absolute bottom-4 right-4 rounded-full bg-black/60 text-white px-3 py-1 text-[11px] font-medium">
+                  1 / {photos.length}
+                </div>
+                {kyc && (
+                  <span className="absolute bottom-4 left-4 gold-seal rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+                    Verified
+                  </span>
+                )}
+              </div>
+              {/* Horizontal thumbnail strip */}
+              {photos.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto chip-scroll px-4 py-3 bg-white">
+                  {photos.slice(1).map((src, i) => (
+                    <button key={src} type="button" onClick={() => setGalleryOpen(true)} className="shrink-0 h-14 w-20 overflow-hidden rounded-xl">
+                      <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Show all photos button */}
@@ -490,7 +557,7 @@ export default function ListingDetailPage() {
           </div>
 
           {/* Booking widget */}
-          <div>
+          <div ref={bookingRef}>
             {isOwnListing ? (
               <div className="rounded-3xl border border-brand-200 bg-brand-50 p-6 text-center lg:sticky lg:top-24">
                 <Home className="mx-auto mb-2 h-8 w-8 text-brand-400" />

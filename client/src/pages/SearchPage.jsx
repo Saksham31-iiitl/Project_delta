@@ -413,43 +413,53 @@ function SearchContent({ isLoaded, mapsEnabled }) {
       </div>
 
       {/* ─── MOBILE ─────────────────────────────────────── */}
-      <div className="lg:hidden">
-        <PageWrapper className="pb-28">
-          {/* Mobile search bar */}
-          <div className="mb-3 flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
-            <MapPin className="h-4 w-4 shrink-0 text-brand-700" />
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-stone-400">Where</p>
-              <input
-                className="w-full bg-transparent text-[13px] font-semibold text-brand-900 placeholder:text-stone-400 focus:outline-none"
-                placeholder="City, area or venue…"
-                value={manualInput}
-                onChange={(e) => setManualInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }}
-              />
+      <div className="lg:hidden flex flex-col min-h-[calc(100vh-68px)]">
+        {/* Sticky header */}
+        <div className="sticky top-0 z-20 bg-cream border-b border-stone-200 px-4 pt-3 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 rounded-full bg-white border border-stone-200 px-3 py-2 flex items-center gap-2 shadow-sm">
+              <MapPin className="h-4 w-4 text-brand-800 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <input
+                  className="w-full bg-transparent text-[13px] font-semibold text-brand-900 placeholder:text-stone-400 focus:outline-none leading-tight"
+                  placeholder="City, area or venue…"
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") geocodeInput(); }}
+                />
+                {areaLabel && <p className="text-[10px] text-stone-500 leading-tight truncate">{radiusKm} km radius</p>}
+              </div>
             </div>
-            <button type="button" onClick={geocodeInput} className="shrink-0 rounded-full bg-brand-800 p-2 text-white">
+            <button
+              type="button"
+              onClick={geocodeInput}
+              className="w-10 h-10 rounded-full bg-brand-800 text-white grid place-items-center shrink-0 active:scale-95 transition-transform"
+            >
               <Search className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Mobile filter chips */}
-          <div className="mb-4 flex gap-2 overflow-x-auto chip-scroll pb-0.5">
-            <div className="shrink-0 inline-flex rounded-full border border-stone-200 p-0.5 text-[11px]">
-              {TYPES.map((t) => (
+          {/* Filter chips */}
+          <div className="flex gap-2 overflow-x-auto chip-scroll pt-3 -mx-1 px-1">
+            {TYPES.filter((t) => t.id !== "").map((t) => {
+              const active = type === t.id;
+              return (
                 <button
-                  key={t.id || "all"}
+                  key={t.id}
                   type="button"
-                  onClick={() => onTypeChange(t.id)}
+                  onClick={() => onTypeChange(active ? "" : t.id)}
                   className={cn(
-                    "rounded-full px-2.5 py-1 transition-colors",
-                    type === t.id ? "bg-brand-800 font-semibold text-white" : "text-stone-600"
+                    "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-all",
+                    active
+                      ? "border-brand-700 bg-brand-50 text-brand-800"
+                      : "border-stone-200 bg-white text-stone-700"
                   )}
                 >
+                  {active && <span className="h-1.5 w-1.5 rounded-full bg-accent-500 shrink-0" />}
                   {t.label}
                 </button>
-              ))}
-            </div>
+              );
+            })}
             {FILTER_CHIPS.map((chip) => {
               const active = eventFilters.has(chip.id);
               return (
@@ -458,58 +468,67 @@ function SearchContent({ isLoaded, mapsEnabled }) {
                   type="button"
                   onClick={() => onEventFilterToggle(chip.id)}
                   className={cn(
-                    "shrink-0 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] transition-all",
-                    active ? "border-brand-700 bg-brand-50 font-semibold text-brand-800" : "border-stone-200 bg-white text-stone-600"
+                    "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] transition-all",
+                    active
+                      ? "border-brand-700 bg-brand-50 font-semibold text-brand-800"
+                      : "border-stone-200 bg-white text-stone-600"
                   )}
                 >
-                  {active && <span className="h-1.5 w-1.5 rounded-full bg-accent-500" />}
+                  {active && <span className="h-1.5 w-1.5 rounded-full bg-accent-500 shrink-0" />}
                   {chip.label}
                 </button>
               );
             })}
           </div>
+        </div>
 
-          {/* Count + sort */}
-          <div className="mb-4 flex items-center justify-between">
-            <p className="font-display text-[18px] text-brand-900">
-              {isPending ? "Searching…" : `${filteredListings.length} stays`}
-            </p>
-            <select value={sortId} onChange={onSortChange} className="bg-transparent text-[13px] font-medium text-brand-700 underline decoration-accent-500 underline-offset-4 focus:outline-none">
-              {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+        {/* Count + sort */}
+        <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+          <p className="font-display text-[18px] text-brand-900 leading-tight">
+            {isPending ? "Searching…" : `${filteredListings.length} stays found`}
+          </p>
+          <select
+            value={sortId}
+            onChange={onSortChange}
+            className="bg-transparent text-[11px] font-semibold text-brand-700 underline decoration-accent-500 underline-offset-4 focus:outline-none"
+          >
+            {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </div>
+
+        {isError && <p className="px-5 mb-3 text-sm text-red-600">Could not load listings.</p>}
+
+        {mobileView === "list" ? (
+          <div className="flex-1 px-4 pb-28 space-y-4">
+            {isPending
+              ? [1, 2, 3].map((i) => <ListingCardSkeleton key={i} />)
+              : filteredListings.map((l) => <ListingCard key={l._id} listing={l} variant="mobile-search" />)
+            }
           </div>
+        ) : (
+          <div className="flex-1 relative overflow-hidden">
+            {showMap ? (
+              <>
+                <MapView center={mapCenter} listings={filteredListings} radiusKm={radiusKm} isLoaded={isLoaded} selectedId={selected?._id} onListingClick={setSelected} searchPin={!!areaLabel} />
+                <MapPopup listing={selected} onClose={() => setSelected(null)} />
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center text-stone-400 text-sm">Map unavailable</div>
+            )}
+          </div>
+        )}
 
-          {isError && <p className="mb-3 text-sm text-red-600">Could not load listings.</p>}
-
-          {mobileView === "list" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {isPending
-                ? [1, 2, 3].map((i) => <ListingCardSkeleton key={i} />)
-                : filteredListings.map((l) => <ListingCard key={l._id} listing={l} />)
-              }
-            </div>
-          ) : (
-            <div className="relative h-[calc(100vh-280px)] overflow-hidden rounded-2xl border border-stone-200">
-              {showMap ? (
-                <>
-                  <MapView center={mapCenter} listings={filteredListings} radiusKm={radiusKm} isLoaded={isLoaded} selectedId={selected?._id} onListingClick={setSelected} searchPin={!!areaLabel} />
-                  <MapPopup listing={selected} onClose={() => setSelected(null)} />
-                </>
-              ) : (
-                <div className="flex h-full items-center justify-center text-stone-400 text-sm">Map unavailable</div>
-              )}
-            </div>
-          )}
-        </PageWrapper>
-
-        {/* Mobile toggle */}
+        {/* Floating Map FAB */}
         <div className="fixed bottom-20 left-1/2 z-30 -translate-x-1/2">
           <button
             type="button"
             onClick={() => { setMobileView((v) => v === "list" ? "map" : "list"); setSelected(null); }}
-            className="flex items-center gap-2 rounded-full bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-xl hover:bg-brand-700 active:scale-95 transition-transform"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-900 text-white px-5 py-3 shadow-xl text-[13px] font-semibold active:scale-95 transition-transform"
           >
-            {mobileView === "list" ? <><Map className="h-4 w-4" /> Show map</> : <><List className="h-4 w-4" /> Show list</>}
+            {mobileView === "list"
+              ? <><Map className="h-4 w-4" /> Map</>
+              : <><List className="h-4 w-4" /> List</>
+            }
           </button>
         </div>
       </div>

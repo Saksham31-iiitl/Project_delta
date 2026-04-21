@@ -15,6 +15,9 @@
     <title>HostTheGuest — Stay close to every celebration</title>
   </head>
   <body>
+    <script>
+      (function(){var t=localStorage.getItem('htg-theme');var p=window.matchMedia('(prefers-color-scheme:dark)').matches;if(t==='dark'||(t===null&&p)){document.documentElement.classList.add('dark')}})();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

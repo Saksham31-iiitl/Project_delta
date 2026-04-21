@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@utils/cn.js";
 import { useAuthStore } from "@stores/authStore.js";
+import { ThemeToggle } from "@components/common/ThemeToggle.jsx";
 
 function initials(user) {
   const n = user?.fullName?.trim();
@@ -53,17 +54,21 @@ export function Navbar({ className }) {
   const hostListPath = token ? "/host/listings/new" : "/login?redirect=/host/listings/new";
   const createHubPath = token ? "/organizer/create" : "/login?redirect=/organizer/create";
 
-  const drawerLinkClass = "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-stone-700 hover:bg-stone-50 transition-colors";
+  const drawerLinkClass = "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors";
 
   return (
-    <header className={cn("sticky top-0 z-40 border-b border-stone-200 bg-white/97 backdrop-blur", className)}>
+    <header className={cn(
+      "sticky top-0 z-40 border-b border-stone-200 bg-white/97 backdrop-blur",
+      "dark:border-[#1e3829] dark:bg-[#0d1a10]/97",
+      className
+    )}>
       <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-3 px-6 lg:px-10">
 
         {/* Left: hamburger (mobile) + logo + nav */}
         <div className="flex items-center gap-8">
           <button
             type="button"
-            className="btn-press rounded-lg p-2 text-stone-600 lg:hidden"
+            className="btn-press rounded-lg p-2 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-[#172a1e] lg:hidden"
             aria-label="Open menu"
             onClick={() => setDrawerOpen(true)}
           >
@@ -76,7 +81,7 @@ export function Navbar({ className }) {
               <path d="M4 22 L20 6 L36 22 V34 H26 V24 H14 V34 H4 Z" fill="#1a4731"/>
               <circle cx="20" cy="16" r="3" fill="#f5a623"/>
             </svg>
-            <span className="font-display text-[22px] text-brand-800 tracking-tight">HostTheGuest</span>
+            <span className="font-display text-[22px] text-brand-800 dark:text-brand-300 tracking-tight">HostTheGuest</span>
           </Link>
 
           {/* Desktop nav links */}
@@ -85,8 +90,8 @@ export function Navbar({ className }) {
               to="/search"
               className={({ isActive }) =>
                 cn(
-                  "relative text-[14px] font-medium text-stone-600 hover:text-brand-800 transition-colors",
-                  isActive && "text-brand-800"
+                  "relative text-[14px] font-medium text-stone-600 dark:text-stone-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors",
+                  isActive && "text-brand-800 dark:text-brand-300"
                 )
               }
             >
@@ -101,7 +106,7 @@ export function Navbar({ className }) {
             <NavLink
               to="/organizer"
               className={({ isActive }) =>
-                cn("text-[14px] font-medium text-stone-600 hover:text-brand-800 transition-colors", isActive && "text-brand-800")
+                cn("text-[14px] font-medium text-stone-600 dark:text-stone-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors", isActive && "text-brand-800 dark:text-brand-300")
               }
             >
               Occasion Hubs
@@ -111,37 +116,37 @@ export function Navbar({ className }) {
             <div className="relative" ref={hostMenuRef}>
               <button
                 type="button"
-                className="flex items-center gap-1 text-[14px] font-medium text-stone-600 hover:text-brand-800 transition-colors"
+                className="flex items-center gap-1 text-[14px] font-medium text-stone-600 dark:text-stone-400 hover:text-brand-800 dark:hover:text-brand-300 transition-colors"
                 onClick={() => setHostMenuOpen((o) => !o)}
               >
                 For Hosts
                 <ChevronDown className={cn("h-4 w-4 transition-transform", hostMenuOpen && "rotate-180")} />
               </button>
               {hostMenuOpen && (
-                <div className="absolute left-0 mt-3 w-52 rounded-2xl border border-stone-200 bg-white py-1.5 shadow-xl">
-                  <p className="px-4 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wide text-stone-400">
+                <div className="absolute left-0 mt-3 w-52 rounded-2xl border border-stone-200 dark:border-[#1e3829] bg-white dark:bg-[#132419] py-1.5 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+                  <p className="px-4 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
                     Choose your role
                   </p>
                   <Link
                     to={hostListPath}
-                    className="flex items-start gap-3 px-4 py-2.5 hover:bg-stone-50"
+                    className="flex items-start gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors"
                     onClick={() => setHostMenuOpen(false)}
                   >
                     <Home className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
                     <div>
-                      <p className="text-sm font-medium text-stone-900">List your space</p>
-                      <p className="text-[11px] text-stone-400">Earn from your spare room</p>
+                      <p className="text-sm font-medium text-stone-900 dark:text-stone-100">List your space</p>
+                      <p className="text-[11px] text-stone-400 dark:text-stone-500">Earn from your spare room</p>
                     </div>
                   </Link>
                   <Link
                     to={createHubPath}
-                    className="flex items-start gap-3 px-4 py-2.5 hover:bg-stone-50"
+                    className="flex items-start gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors"
                     onClick={() => setHostMenuOpen(false)}
                   >
                     <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
                     <div>
-                      <p className="text-sm font-medium text-stone-900">Create event hub</p>
-                      <p className="text-[11px] text-stone-400">For wedding &amp; pooja organizers</p>
+                      <p className="text-sm font-medium text-stone-900 dark:text-stone-100">Create event hub</p>
+                      <p className="text-[11px] text-stone-400 dark:text-stone-500">For wedding &amp; pooja organizers</p>
                     </div>
                   </Link>
                 </div>
@@ -150,45 +155,47 @@ export function Navbar({ className }) {
           </nav>
         </div>
 
-        {/* Right: auth controls */}
-        <div className="flex items-center gap-3">
+        {/* Right: theme toggle + auth controls */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           {token ? (
             <div className="relative hidden lg:block" ref={menuRef}>
               <button
                 type="button"
-                className="btn-press flex items-center gap-2 rounded-full border border-stone-200 py-1 pl-1 pr-3 hover:border-stone-300 transition-colors"
+                className="btn-press flex items-center gap-2 rounded-full border border-stone-200 dark:border-[#243e2c] py-1 pl-1 pr-3 hover:border-stone-300 dark:hover:border-[#2e5038] transition-colors"
                 aria-expanded={menuOpen}
                 aria-haspopup="true"
                 onClick={() => setMenuOpen((o) => !o)}
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-800">
-                  {initials(user) ?? <User className="h-4 w-4 text-brand-600" />}
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/60 text-sm font-semibold text-brand-800 dark:text-brand-200">
+                  {initials(user) ?? <User className="h-4 w-4 text-brand-600 dark:text-brand-400" />}
                 </span>
-                <span className="text-[13px] font-medium text-stone-700">{user?.fullName?.split(" ")[0] || "Account"}</span>
-                <ChevronDown className={cn("h-4 w-4 text-stone-400 transition-transform", menuOpen && "rotate-180")} />
+                <span className="text-[13px] font-medium text-stone-700 dark:text-stone-300">{user?.fullName?.split(" ")[0] || "Account"}</span>
+                <ChevronDown className={cn("h-4 w-4 text-stone-400 dark:text-stone-500 transition-transform", menuOpen && "rotate-180")} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-stone-200 bg-white py-1 shadow-xl" role="menu">
-                  <Link to="/profile" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50" onClick={() => setMenuOpen(false)}>
-                    <User className="h-4 w-4 text-stone-400" /> Profile
+                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-stone-200 dark:border-[#1e3829] bg-white dark:bg-[#132419] py-1 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]" role="menu">
+                  <Link to="/profile" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors" onClick={() => setMenuOpen(false)}>
+                    <User className="h-4 w-4 text-stone-400 dark:text-stone-500" /> Profile
                   </Link>
-                  <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50" onClick={() => setMenuOpen(false)}>
-                    <Calendar className="h-4 w-4 text-stone-400" /> My Bookings
+                  <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors" onClick={() => setMenuOpen(false)}>
+                    <Calendar className="h-4 w-4 text-stone-400 dark:text-stone-500" /> My Bookings
                   </Link>
                   {isHost && (
-                    <Link to="/host" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50" onClick={() => setMenuOpen(false)}>
-                      <LayoutDashboard className="h-4 w-4 text-stone-400" /> Host Dashboard
+                    <Link to="/host" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors" onClick={() => setMenuOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4 text-stone-400 dark:text-stone-500" /> Host Dashboard
                     </Link>
                   )}
                   {isAdmin && (
-                    <Link to="/admin" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50" onClick={() => setMenuOpen(false)}>
-                      <Shield className="h-4 w-4 text-stone-400" /> Admin
+                    <Link to="/admin" className="flex items-center gap-2 px-4 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#172a1e] transition-colors" onClick={() => setMenuOpen(false)}>
+                      <Shield className="h-4 w-4 text-stone-400 dark:text-stone-500" /> Admin
                     </Link>
                   )}
-                  <hr className="my-1 border-stone-100" />
+                  <hr className="my-1 border-stone-100 dark:border-[#1e3829]" />
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-[#280f0f] transition-colors"
                     onClick={() => { setMenuOpen(false); logout(); navigate("/", { replace: true }); }}
                   >
                     <LogOut className="h-4 w-4" /> Log out
@@ -197,8 +204,8 @@ export function Navbar({ className }) {
               )}
             </div>
           ) : (
-            <div className="hidden items-center gap-4 lg:flex">
-              <Link to="/login" className="text-[14px] font-medium text-stone-700 hover:text-brand-800 transition-colors">
+            <div className="hidden items-center gap-3 lg:flex">
+              <Link to="/login" className="text-[14px] font-medium text-stone-700 dark:text-stone-300 hover:text-brand-800 dark:hover:text-brand-300 transition-colors">
                 Log in
               </Link>
               <Link to="/register" className="rounded-full bg-brand-800 px-5 py-2 text-[13px] font-semibold text-white hover:bg-brand-900 transition-colors">
@@ -218,39 +225,42 @@ export function Navbar({ className }) {
             aria-label="Close menu"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-[min(85%,300px)] flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-stone-100 px-4 py-4">
-              <span className="font-display text-[20px] text-brand-800">HostTheGuest</span>
-              <button type="button" className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100" onClick={() => setDrawerOpen(false)}>
-                <X className="h-5 w-5" />
-              </button>
+          <div className="absolute left-0 top-0 flex h-full w-[min(85%,300px)] flex-col bg-white dark:bg-[#0f1e14] shadow-xl">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-[#1e3829] px-4 py-4">
+              <span className="font-display text-[20px] text-brand-800 dark:text-brand-300">HostTheGuest</span>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <button type="button" className="rounded-lg p-1.5 text-stone-400 dark:text-stone-500 hover:bg-stone-100 dark:hover:bg-[#172a1e]" onClick={() => setDrawerOpen(false)}>
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {token && user && (
-              <div className="flex items-center gap-3 border-b border-stone-100 bg-stone-50 px-4 py-3">
+              <div className="flex items-center gap-3 border-b border-stone-100 dark:border-[#1e3829] bg-stone-50 dark:bg-[#132419] px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-bold text-white">
                   {initials(user) ?? <User className="h-4 w-4 text-white" />}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-stone-800">{user.fullName || "Welcome back"}</p>
-                  <p className="truncate text-xs text-stone-400">{user.phone || user.email || ""}</p>
+                  <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">{user.fullName || "Welcome back"}</p>
+                  <p className="truncate text-xs text-stone-400 dark:text-stone-500">{user.phone || user.email || ""}</p>
                 </div>
               </div>
             )}
 
             <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-              <NavLink to="/" end className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 text-brand-700 font-semibold")} onClick={() => setDrawerOpen(false)}>
+              <NavLink to="/" end className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
                 <Home className="h-5 w-5" /> Home
               </NavLink>
-              <NavLink to="/search" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 text-brand-700 font-semibold")} onClick={() => setDrawerOpen(false)}>
+              <NavLink to="/search" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
                 <Search className="h-5 w-5" /> Stays
               </NavLink>
-              <NavLink to="/dashboard" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 text-brand-700 font-semibold")} onClick={() => setDrawerOpen(false)}>
+              <NavLink to="/dashboard" className={({ isActive }) => cn(drawerLinkClass, isActive && "bg-brand-50 dark:bg-[#16301e] text-brand-700 dark:text-brand-300 font-semibold")} onClick={() => setDrawerOpen(false)}>
                 <Calendar className="h-5 w-5" /> My Bookings
               </NavLink>
 
-              <div className="my-1.5 border-t border-stone-100" />
-              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400">For Hosts</p>
+              <div className="my-1.5 border-t border-stone-100 dark:border-[#1e3829]" />
+              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">For Hosts</p>
               <Link to={hostListPath} className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
                 <Home className="h-5 w-5 text-brand-500" /> List your space
               </Link>
@@ -260,30 +270,30 @@ export function Navbar({ className }) {
 
               {token && (isHost || isAdmin) && (
                 <>
-                  <div className="my-1.5 border-t border-stone-100" />
-                  <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400">Dashboard</p>
+                  <div className="my-1.5 border-t border-stone-100 dark:border-[#1e3829]" />
+                  <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">Dashboard</p>
                   {isHost && (
                     <Link to="/host" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
-                      <LayoutDashboard className="h-5 w-5 text-stone-400" /> Host Dashboard
+                      <LayoutDashboard className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Host Dashboard
                     </Link>
                   )}
                   {isAdmin && (
                     <Link to="/admin" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
-                      <Shield className="h-5 w-5 text-stone-400" /> Admin Panel
+                      <Shield className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Admin Panel
                     </Link>
                   )}
                 </>
               )}
 
-              <div className="my-1.5 border-t border-stone-100" />
+              <div className="my-1.5 border-t border-stone-100 dark:border-[#1e3829]" />
               {token ? (
                 <>
                   <Link to="/profile" className={drawerLinkClass} onClick={() => setDrawerOpen(false)}>
-                    <User className="h-5 w-5 text-stone-400" /> Profile
+                    <User className="h-5 w-5 text-stone-400 dark:text-stone-500" /> Profile
                   </Link>
                   <button
                     type="button"
-                    className={cn(drawerLinkClass, "w-full text-left text-red-500")}
+                    className={cn(drawerLinkClass, "w-full text-left text-red-500 dark:text-red-400")}
                     onClick={() => { setDrawerOpen(false); logout(); navigate("/", { replace: true }); }}
                   >
                     <LogOut className="h-5 w-5 text-red-400" /> Log out
