@@ -37,7 +37,12 @@ async function verifyOtpController(req, res) {
     { expiresIn: env.JWT_EXPIRES_IN }
   );
 
-  res.cookie("token", token, { httpOnly: true, sameSite: "lax" });
+  const isProd = env.NODE_ENV === "production";
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+  });
   return res.json({ token, user });
 }
 

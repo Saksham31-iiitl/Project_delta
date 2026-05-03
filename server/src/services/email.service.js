@@ -13,6 +13,9 @@ function createTransporter() {
 
 async function sendOtpEmail(email, otp) {
   if (!env.EMAIL_USER || !env.EMAIL_APP_PASSWORD) {
+    if (env.NODE_ENV === "production") {
+      throw new Error("Email service not configured. Set EMAIL_USER and EMAIL_APP_PASSWORD env vars.");
+    }
     console.log(`\n[DEV OTP] Email: ${email}  →  OTP: ${otp}\n`);
     return { mocked: true };
   }

@@ -1,6 +1,7 @@
 const { z } = require("zod");
 
 const envSchema = z.object({
+  NODE_ENV: z.string().default("development"),
   PORT: z.string().default("5000"),
   MONGODB_URI: z.string().default("mongodb://127.0.0.1:27017/nearbystay"),
   JWT_SECRET: z.string().default("dev-secret"),
