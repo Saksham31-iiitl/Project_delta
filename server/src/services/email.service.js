@@ -8,6 +8,9 @@ function createTransporter() {
       user: env.EMAIL_USER,
       pass: env.EMAIL_APP_PASSWORD,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 }
 
