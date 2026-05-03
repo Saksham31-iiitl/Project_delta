@@ -1,35 +1,19 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const { env } = require("../config/env");
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    family: 4,
-    auth: {
-      user: env.EMAIL_USER,
-      pass: env.EMAIL_APP_PASSWORD,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  });
-}
-
 async function sendOtpEmail(email, otp) {
-  if (!env.EMAIL_USER || !env.EMAIL_APP_PASSWORD) {
+  if (!env.RESEND_API_KEY) {
     if (env.NODE_ENV === "production") {
-      throw new Error("Email service not configured. Set EMAIL_USER and EMAIL_APP_PASSWORD env vars.");
+      throw new Error("Email service not configured. Set RESEND_API_KEY env var.");
     }
     console.log(`\n[DEV OTP] Email: ${email}  →  OTP: ${otp}\n`);
     return { mocked: true };
   }
 
-  const transporter = createTransporter();
+  const resend = new Resend(env.RESEND_API_KEY);
 
-  await transporter.sendMail({
-    from: `"HostTheGuest" <${env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: "HostTheGuest <onboarding@resend.dev>",
     to: email,
     subject: "Your HostTheGuest login OTP",
     html: `
