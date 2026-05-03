@@ -12,7 +12,7 @@ async function sendOtpEmail(email, otp) {
 
   const resend = new Resend(env.RESEND_API_KEY);
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: "HostTheGuest <onboarding@resend.dev>",
     to: email,
     subject: "Your HostTheGuest login OTP",
@@ -33,6 +33,8 @@ async function sendOtpEmail(email, otp) {
       </div>
     `,
   });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
 
   return { mocked: false };
 }
